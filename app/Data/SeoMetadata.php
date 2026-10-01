@@ -1,0 +1,16 @@
+<?php
+
+namespace App\Data;
+
+final readonly class SeoMetadata
+{
+    public function __construct(
+        public string $title,
+        public ?string $description,
+        public string $canonical,
+        public string $robots,
+        public string $ogTitle,
+        public ?string $ogDescription,
+        public ?string $ogImage,
+    ) {}
+}
