@@ -1,6 +1,6 @@
 <x-layouts.public :metadata="$metadata">
-    <a href="{{ route('products.index') }}" class="text-sm font-semibold text-orange-700">&larr; Kembali ke menu</a>
-    <article class="mt-6 grid gap-8 lg:grid-cols-2 lg:items-start">
+    <nav aria-label="Breadcrumb" class="mb-6 text-sm text-stone-500"><a class="text-link" href="{{ route('home') }}">Beranda</a> <span aria-hidden="true">/</span> <a class="text-link" href="{{ route('products.index') }}">Menu</a> <span aria-hidden="true">/</span> {{ $product->name }}</nav>
+    <article class="grid gap-8 lg:grid-cols-2 lg:items-start">
         @if ($product->image)<img src="{{ $product->image->url }}" alt="{{ $product->image->alt_text ?: $product->name }}" class="w-full rounded-2xl object-cover" loading="eager">@endif
         <div>
             <p class="text-sm font-semibold text-orange-700">{{ $product->category->name }}</p>

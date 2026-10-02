@@ -1,9 +1,5 @@
 <x-layouts.public :metadata="$metadata">
-    <div class="mb-10 max-w-2xl">
-        <p class="text-sm font-bold uppercase tracking-[0.2em] text-orange-700">D'Mentai</p>
-        <h1 class="mt-2 text-4xl font-black tracking-tight sm:text-5xl">Outlet</h1>
-        <p class="mt-4 text-stone-600">Temukan outlet D'Mentai.</p>
-    </div>
+    <section class="page-intro"><p class="eyebrow">Kunjungi kami</p><h1>Outlet</h1><p>Informasi lokasi yang dikelola D’Mentai.</p></section>
     @if ($outlets->isEmpty())
         <p class="rounded-2xl border border-dashed border-stone-300 bg-white p-8 text-stone-600">Informasi outlet akan ditampilkan di sini.</p>
     @else
@@ -11,7 +7,7 @@
             @foreach ($outlets as $outlet)
                 <a href="{{ route('outlets.show', $outlet->slug) }}" class="overflow-hidden rounded-2xl border border-stone-200 bg-white hover:shadow-md">
                     @if ($outlet->image)<img src="{{ $outlet->image->url }}" alt="{{ $outlet->image->alt_text ?: $outlet->name }}" class="aspect-[4/3] w-full object-cover" loading="lazy">@endif
-                    <div class="p-5"><h2 class="text-xl font-bold">{{ $outlet->name }}</h2>@if ($outlet->address)<p class="mt-2 line-clamp-3 text-sm leading-6 text-stone-600">{{ $outlet->address }}</p>@endif</div>
+                    <div class="card-body"><h2>{{ $outlet->name }}</h2>@if ($outlet->address)<p>{{ $outlet->address }}</p>@endif @if($outlet->business_hours)<p class="small-note whitespace-pre-line">{{ $outlet->business_hours }}</p>@endif <div class="mt-4 flex flex-wrap gap-3 text-sm font-bold text-orange-800">@if($outlet->phone)<span>{{ $outlet->phone }}</span>@endif @if($outlet->google_maps_url)<span>Lihat peta ↗</span>@endif</div></div>
                 </a>
             @endforeach
         </div>

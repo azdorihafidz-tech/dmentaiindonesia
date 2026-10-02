@@ -1,5 +1,5 @@
 <x-layouts.public :metadata="$metadata">
-    <a href="{{ route('outlets.index') }}" class="text-sm font-semibold text-orange-700">&larr; Kembali ke outlet</a>
+    <nav aria-label="Breadcrumb" class="mb-6 text-sm text-stone-500"><a class="text-link" href="{{ route('home') }}">Beranda</a> <span aria-hidden="true">/</span> <a class="text-link" href="{{ route('outlets.index') }}">Outlet</a> <span aria-hidden="true">/</span> {{ $outlet->name }}</nav>
     <article class="mx-auto mt-6 max-w-3xl">
         @if ($outlet->image)<img src="{{ $outlet->image->url }}" alt="{{ $outlet->image->alt_text ?: $outlet->name }}" class="mb-8 aspect-[16/9] w-full rounded-2xl object-cover">@endif
         <h1 class="text-4xl font-black tracking-tight sm:text-5xl">{{ $outlet->name }}</h1>
