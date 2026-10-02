@@ -15,7 +15,7 @@ class Outlet extends Model
     public const STATUS_INACTIVE = 'inactive';
 
     protected $fillable = [
-        'name', 'slug', 'address', 'phone', 'whatsapp', 'business_hours', 'google_maps_url', 'latitude',
+        'name', 'slug', 'address', 'city', 'province', 'country', 'phone', 'whatsapp', 'business_hours', 'google_maps_url', 'latitude',
         'longitude', 'image_media_id', 'description', 'status', 'featured', 'sort_order', 'seo_title',
         'seo_description', 'canonical_url', 'og_title', 'og_description', 'og_media_id', 'robots_directive',
     ];
@@ -30,8 +30,8 @@ class Outlet extends Model
         static::saving(function (Outlet $outlet): void {
             $outlet->slug = Str::slug($outlet->slug ?: $outlet->name);
             Validator::make($outlet->only(['latitude', 'longitude', 'google_maps_url']), [
-                'latitude' => ['nullable', 'numeric', 'between:-90,90'],
-                'longitude' => ['nullable', 'numeric', 'between:-180,180'],
+                'latitude' => ['nullable', 'required_with:longitude', 'numeric', 'between:-90,90'],
+                'longitude' => ['nullable', 'required_with:latitude', 'numeric', 'between:-180,180'],
                 'google_maps_url' => ['nullable', 'url', 'max:2048'],
             ])->validate();
         });

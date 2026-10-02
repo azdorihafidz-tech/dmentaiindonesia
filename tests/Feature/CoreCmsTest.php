@@ -54,10 +54,24 @@ class CoreCmsTest extends TestCase
         Livewire::actingAs($admin)
             ->test(WebsiteSettings::class)
             ->set('data.brand.site_name', 'D’Mentai Baru')
+            ->set('data.brand.description', 'Deskripsi bisnis yang dikonfigurasi.')
+            ->set('data.location.city', 'Kota Uji')
+            ->set('data.location.province', 'Provinsi Uji')
+            ->set('data.location.country', 'Indonesia')
             ->call('save')
             ->assertHasNoErrors();
 
         $this->assertDatabaseHas('site_settings', ['key' => 'brand.site_name', 'value' => 'D’Mentai Baru']);
+        $this->assertDatabaseHas('site_settings', ['key' => 'brand.description', 'value' => 'Deskripsi bisnis yang dikonfigurasi.']);
+        $this->assertDatabaseHas('site_settings', ['key' => 'location.city', 'value' => 'Kota Uji']);
+        $this->assertDatabaseHas('site_settings', ['key' => 'location.province', 'value' => 'Provinsi Uji']);
+        $this->assertDatabaseHas('site_settings', ['key' => 'location.country', 'value' => 'Indonesia']);
+
+        Livewire::actingAs($admin)
+            ->test(WebsiteSettings::class)
+            ->set('data.contact.email', 'not-an-email')
+            ->call('save')
+            ->assertHasErrors(['data.contact.email']);
     }
 
     public function test_media_upload_accepts_only_images_for_admins(): void

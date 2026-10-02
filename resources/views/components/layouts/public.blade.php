@@ -2,6 +2,7 @@
     $site = app(\App\Services\SiteSettings::class);
     $siteName = $site->get('brand.site_name', config('app.name'));
     $logo = $site->media('brand.logo_media_id');
+    $siteAddress = collect([$site->get('location.address'), $site->get('location.city'), $site->get('location.province'), $site->get('location.country')])->filter()->implode(', ');
     $links = [
         ['Menu', 'products.index'], ['Promo', 'promotions.index'], ['Outlet', 'outlets.index'],
         ['Galeri', 'gallery.index'], ['Artikel', 'articles.index'], ['FAQ', 'faqs.index'],
@@ -45,9 +46,10 @@
         <div class="footer-grid">
             <div><a href="{{ route('home') }}" class="footer-brand">{{ $siteName }}</a>@if($site->get('brand.tagline'))<p class="footer-tagline">{{ $site->get('brand.tagline') }}</p>@endif @if($site->get('footer.text'))<p class="footer-copy">{{ $site->get('footer.text') }}</p>@endif</div>
             <div><h2 class="footer-heading">Jelajahi</h2><div class="footer-links"><a href="{{ route('products.index') }}">Menu</a><a href="{{ route('outlets.index') }}">Outlet</a><a href="{{ route('promotions.index') }}">Promo</a>@foreach($cmsPages as $cmsPage)<a href="{{ route('pages.show', $cmsPage->slug) }}">{{ $cmsPage->title }}</a>@endforeach</div></div>
-            @if($contactPhone || $site->get('contact.email') || $site->get('location.address') || collect($socials)->filter()->isNotEmpty())
+            @if($contactPhone || $site->get('contact.email') || $siteAddress || $site->get('location.maps_url') || collect($socials)->filter()->isNotEmpty())
             <div><h2 class="footer-heading">Temukan kami</h2><div class="footer-links">
-                @if($site->get('location.address'))<p>{{ $site->get('location.address') }}</p>@endif
+                @if($siteAddress)<p>{{ $siteAddress }}</p>@endif
+                @if($site->get('location.maps_url'))<a href="{{ $site->get('location.maps_url') }}" target="_blank" rel="noopener noreferrer">Lihat peta</a>@endif
                 @if($contactPhone)<a href="{{ $whatsapp ? 'https://wa.me/'.preg_replace('/\D+/', '', $whatsapp) : 'tel:'.preg_replace('/[^+\d]/', '', $contactPhone) }}" @if($whatsapp)target="_blank" rel="noopener noreferrer"@endif>{{ $whatsapp ? 'WhatsApp' : $contactPhone }}</a>@endif
                 @if($site->get('contact.email'))<a href="mailto:{{ $site->get('contact.email') }}">{{ $site->get('contact.email') }}</a>@endif
                 @foreach($socials as $name => $url)@if($url)<a href="{{ $url }}" target="_blank" rel="noopener noreferrer">{{ $name }}</a>@endif @endforeach

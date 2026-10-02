@@ -12,5 +12,6 @@ final readonly class SeoMetadata
         public string $ogTitle,
         public ?string $ogDescription,
         public ?string $ogImage,
+        public array $structuredData = [],
     ) {}
 }

@@ -47,6 +47,7 @@ class WebsiteSettings extends Page
             Tabs::make('Pengaturan')->tabs([
                 Tab::make('Brand')->schema([Section::make('Identitas brand')->schema([
                     TextInput::make('brand.site_name')->label('Nama website')->required()->maxLength(120),
+                    Textarea::make('brand.description')->label('Deskripsi bisnis')->rows(3)->maxLength(500),
                     TextInput::make('brand.tagline')->label('Tagline')->maxLength(180),
                     Select::make('brand.logo_media_id')->label('Logo')->options($images)->searchable()->preload(),
                     Select::make('brand.favicon_media_id')->label('Favicon')->options($images)->searchable()->preload(),
@@ -56,6 +57,9 @@ class WebsiteSettings extends Page
                     TextInput::make('contact.phone')->label('Telepon')->tel()->maxLength(40),
                     TextInput::make('contact.whatsapp')->label('WhatsApp')->tel()->maxLength(40),
                     Textarea::make('location.address')->label('Alamat')->rows(3),
+                    TextInput::make('location.city')->label('Kota')->maxLength(120),
+                    TextInput::make('location.province')->label('Provinsi')->maxLength(120),
+                    TextInput::make('location.country')->label('Negara')->maxLength(120),
                     TextInput::make('location.maps_url')->label('Google Maps URL')->url()->maxLength(2048),
                     Textarea::make('location.business_hours')->label('Jam operasional')->rows(4),
                 ])->columns(2)]),
@@ -78,7 +82,7 @@ class WebsiteSettings extends Page
                 Tab::make('SEO')->schema([Section::make('SEO default')->schema([
                     TextInput::make('seo.default_title')->label('Judul default')->maxLength(255),
                     Textarea::make('seo.meta_description')->label('Deskripsi default')->rows(3)->maxLength(320),
-                    Select::make('seo.default_og_media_id')->label('Gambar Open Graph default')->options($images)->searchable()->preload(),
+                    Select::make('seo.default_og_media_id')->label('Gambar Open Graph dan sosial default')->options($images)->searchable()->preload(),
                 ])->columns(2)]),
             ])->columnSpanFull(),
         ])->statePath('data');

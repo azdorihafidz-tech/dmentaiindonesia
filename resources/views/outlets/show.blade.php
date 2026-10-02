@@ -3,7 +3,8 @@
     <article class="mx-auto mt-6 max-w-3xl">
         @if ($outlet->image)<img src="{{ $outlet->image->url }}" alt="{{ $outlet->image->alt_text ?: $outlet->name }}" class="mb-8 aspect-[16/9] w-full rounded-2xl object-cover">@endif
         <h1 class="text-4xl font-black tracking-tight sm:text-5xl">{{ $outlet->name }}</h1>
-        @if ($outlet->address)<p class="mt-5 whitespace-pre-line text-lg leading-8 text-stone-700">{{ $outlet->address }}</p>@endif
+        @php($address = collect([$outlet->address, $outlet->city, $outlet->province, $outlet->country])->filter()->implode(', '))
+        @if ($address)<p class="mt-5 whitespace-pre-line text-lg leading-8 text-stone-700">{{ $address }}</p>@endif
         @if ($outlet->business_hours)<section class="mt-6"><h2 class="font-bold">Jam operasional</h2><p class="mt-2 whitespace-pre-line text-stone-600">{{ $outlet->business_hours }}</p></section>@endif
         <div class="mt-5 flex flex-wrap gap-4 text-sm font-semibold">
             @if ($outlet->phone)<a href="tel:{{ $outlet->phone }}" class="text-orange-700">Telepon outlet</a>@endif

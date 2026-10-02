@@ -99,6 +99,7 @@ class ProductCmsTest extends TestCase
     public function test_public_menu_requires_active_product_and_active_category_and_uses_product_seo(): void
     {
         $category = ProductCategory::query()->create(['name' => 'Gyoza', 'slug' => 'gyoza', 'status' => 'active']);
+        ProductCategory::query()->create(['name' => 'Kosong', 'slug' => 'kategori-kosong', 'status' => 'active']);
         $product = Product::query()->create([
             'category_id' => $category->id,
             'name' => 'Gyoza Pedas',

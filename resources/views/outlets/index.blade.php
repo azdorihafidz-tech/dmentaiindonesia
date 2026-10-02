@@ -7,7 +7,7 @@
             @foreach ($outlets as $outlet)
                 <a href="{{ route('outlets.show', $outlet->slug) }}" class="overflow-hidden rounded-2xl border border-stone-200 bg-white hover:shadow-md">
                     @if ($outlet->image)<img src="{{ $outlet->image->url }}" alt="{{ $outlet->image->alt_text ?: $outlet->name }}" class="aspect-[4/3] w-full object-cover" loading="lazy">@endif
-                    <div class="card-body"><h2>{{ $outlet->name }}</h2>@if ($outlet->address)<p>{{ $outlet->address }}</p>@endif @if($outlet->business_hours)<p class="small-note whitespace-pre-line">{{ $outlet->business_hours }}</p>@endif <div class="mt-4 flex flex-wrap gap-3 text-sm font-bold text-orange-800">@if($outlet->phone)<span>{{ $outlet->phone }}</span>@endif @if($outlet->google_maps_url)<span>Lihat peta ↗</span>@endif</div></div>
+                    <div class="card-body"><h2>{{ $outlet->name }}</h2>@php($address = collect([$outlet->address, $outlet->city, $outlet->province, $outlet->country])->filter()->implode(', ')) @if ($address)<p>{{ $address }}</p>@endif @if($outlet->business_hours)<p class="small-note whitespace-pre-line">{{ $outlet->business_hours }}</p>@endif <div class="mt-4 flex flex-wrap gap-3 text-sm font-bold text-orange-800">@if($outlet->phone)<span>{{ $outlet->phone }}</span>@endif @if($outlet->whatsapp)<span>{{ $outlet->whatsapp }}</span>@endif @if($outlet->google_maps_url)<span>Lihat peta ↗</span>@endif</div></div>
                 </a>
             @endforeach
         </div>

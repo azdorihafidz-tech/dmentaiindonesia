@@ -22,3 +22,7 @@ Panel admin tersedia di `/admin`. Akses hanya diberikan kepada akun dengan `is_a
 - Kelola halaman di **Halaman**. Hanya halaman berstatus terbit yang tersedia pada URL slug-nya; konten HTML dibatasi oleh sanitizer allowlist saat ditampilkan.
 - Metadata SEO dikelola terpusat oleh `SeoManager` dan Blade component `<x-seo>`.
 - Sitemap dinamis tersedia di `/sitemap.xml`, sedangkan `/robots.txt` mengecualikan panel admin dan merujuk sitemap berdasarkan `APP_URL`.
+
+## Persiapan konfigurasi produksi (belum deploy)
+
+`.env.example` berisi nilai awal untuk pengembangan lokal, bukan konfigurasi siap pakai untuk server. Sebelum deployment, siapkan `.env` khusus server dengan `APP_ENV=production`, `APP_DEBUG=false`, `APP_URL=https://dmentaiindonesia.com`, kredensial MariaDB yang disediakan untuk aplikasi, serta `FILESYSTEM_DISK=public`. Jangan menyalin `.env` lokal atau kredensial ke Git. Build aset dan tinjau migration sebelum deployment; tidak ada deployment yang dilakukan dalam Phase 5.

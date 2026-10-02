@@ -3,7 +3,7 @@
         <div class="hero-copy">
             <p class="eyebrow">{{ $settings->get('brand.tagline', 'D’Mentai Indonesia') }}</p>
             <h1>{{ $settings->get('brand.site_name', "D'Mentai Indonesia") }}</h1>
-            @if($settings->get('seo.meta_description'))<p class="hero-description">{{ $settings->get('seo.meta_description') }}</p>@endif
+            @if($settings->get('brand.description'))<p class="hero-description">{{ $settings->get('brand.description') }}</p>@endif
             <div class="hero-actions"><a class="button button-primary" href="{{ route('products.index') }}">Lihat menu <span aria-hidden="true">↗</span></a><a class="button button-light" href="{{ route('outlets.index') }}">Cari outlet</a></div>
         </div>
         <div class="hero-art" aria-hidden="true"><span class="hero-orbit"></span><span class="hero-stamp">D’<br>MENTAI</span><span class="hero-spark hero-spark-one">✳</span><span class="hero-spark hero-spark-two">✦</span></div>

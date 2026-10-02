@@ -116,10 +116,13 @@ class ArticleGalleryCmsTest extends TestCase
         $later = GalleryItem::query()->create(['title' => 'Foto kedua', 'image_media_id' => $media->id, 'status' => 'active', 'sort_order' => 2]);
         GalleryItem::query()->create(['title' => 'Foto pertama', 'image_media_id' => $media->id, 'status' => 'active', 'sort_order' => 1]);
         GalleryItem::query()->create(['title' => 'Foto privat', 'image_media_id' => $media->id, 'status' => 'inactive', 'sort_order' => 0]);
+        GalleryItem::query()->create(['title' => 'Foto tanpa media', 'status' => 'active', 'sort_order' => 3]);
         $later->update(['caption' => 'Keterangan diubah']);
         $this->assertDatabaseHas('gallery_items', ['id' => $later->id, 'caption' => 'Keterangan diubah']);
 
-        $this->get('/galeri')->assertOk()->assertSeeInOrder(['Foto pertama', 'Keterangan diubah'])->assertDontSee('Foto privat');
+        $this->get('/galeri')->assertOk()->assertSeeInOrder(['Foto pertama', 'Keterangan diubah'])
+            ->assertSee('alt="Foto uji"', false)->assertSee('loading="lazy"', false)
+            ->assertDontSee('Foto privat')->assertDontSee('Foto tanpa media');
     }
 
     public function test_gallery_admin_requires_authorization_and_valid_image_selection(): void

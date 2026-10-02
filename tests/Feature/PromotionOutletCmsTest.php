@@ -42,9 +42,11 @@ class PromotionOutletCmsTest extends TestCase
 
         Promotion::query()->create(['title' => 'Sedang berlaku', 'slug' => 'sedang-berlaku', 'status' => 'active', 'short_description' => 'Informasi saat ini']);
         Promotion::query()->create(['title' => 'Kedaluwarsa', 'slug' => 'kedaluwarsa', 'status' => 'active', 'end_at' => now()->subDay()]);
+        Promotion::query()->create(['title' => 'Belum Mulai', 'slug' => 'belum-mulai', 'status' => 'active', 'featured' => true, 'start_at' => now()->addDay()]);
         Promotion::query()->create(['title' => 'Nonaktif', 'slug' => 'nonaktif-promo', 'status' => 'inactive']);
 
-        $this->get('/promo')->assertOk()->assertSee('Sedang berlaku')->assertDontSee('Kedaluwarsa')->assertDontSee('Nonaktif');
+        $this->get('/promo')->assertOk()->assertSee('Sedang berlaku')->assertDontSee('Kedaluwarsa')->assertDontSee('Belum Mulai')->assertDontSee('Nonaktif');
+        $this->get('/')->assertOk()->assertDontSee('Belum Mulai');
         $this->get('/promo/sedang-berlaku')->assertOk()->assertSee('Informasi saat ini');
         $this->get('/promo/kedaluwarsa')->assertNotFound();
     }
@@ -70,8 +72,8 @@ class PromotionOutletCmsTest extends TestCase
     public function test_outlets_can_be_created_updated_and_slugs_are_unique(): void
     {
         $outlet = Outlet::query()->create(['name' => 'Outlet Contoh Uji', 'slug' => 'outlet-uji', 'status' => 'active']);
-        $outlet->update(['address' => 'Alamat untuk pengujian', 'sort_order' => 2]);
-        $this->assertDatabaseHas('outlets', ['id' => $outlet->id, 'address' => 'Alamat untuk pengujian']);
+        $outlet->update(['address' => 'Alamat untuk pengujian', 'city' => 'Kota Uji', 'province' => 'Provinsi Uji', 'country' => 'Indonesia', 'sort_order' => 2]);
+        $this->assertDatabaseHas('outlets', ['id' => $outlet->id, 'address' => 'Alamat untuk pengujian', 'city' => 'Kota Uji', 'province' => 'Provinsi Uji', 'country' => 'Indonesia']);
 
         try {
             Outlet::query()->create(['name' => 'Duplikat', 'slug' => 'outlet-uji']);
@@ -91,6 +93,13 @@ class PromotionOutletCmsTest extends TestCase
         }
 
         try {
+            Outlet::query()->create(['name' => 'Koordinat parsial', 'slug' => 'koordinat-parsial', 'latitude' => -6.2]);
+            $this->fail('Latitude and longitude must be provided together.');
+        } catch (ValidationException $exception) {
+            $this->assertArrayHasKey('longitude', $exception->errors());
+        }
+
+        try {
             Outlet::query()->create(['name' => 'URL salah', 'slug' => 'url-salah', 'google_maps_url' => 'javascript:alert(1)']);
             $this->fail('Google Maps URL must be valid.');
         } catch (ValidationException $exception) {
@@ -99,9 +108,11 @@ class PromotionOutletCmsTest extends TestCase
 
         Outlet::query()->create(['name' => 'Outlet Terbuka', 'slug' => 'outlet-terbuka', 'status' => 'active', 'address' => 'Alamat dari data uji', 'google_maps_url' => 'https://maps.google.com/?q=test']);
         Outlet::query()->create(['name' => 'Outlet Tertutup', 'slug' => 'outlet-tertutup', 'status' => 'inactive']);
+        Outlet::query()->create(['name' => 'Outlet Tanpa Peta', 'slug' => 'outlet-tanpa-peta', 'status' => 'active', 'address' => 'Alamat tanpa tautan peta']);
 
         $this->get('/outlet')->assertOk()->assertSee('Outlet Terbuka')->assertDontSee('Outlet Tertutup');
         $this->get('/outlet/outlet-terbuka')->assertOk()->assertSee('Alamat dari data uji')->assertSee('Lihat peta');
+        $this->get('/outlet/outlet-tanpa-peta')->assertOk()->assertSee('Alamat tanpa tautan peta')->assertDontSee('Lihat peta');
         $this->get('/outlet/outlet-tertutup')->assertNotFound();
     }
 
