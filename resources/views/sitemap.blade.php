@@ -13,4 +13,7 @@
     @foreach ($outlets as $outlet)
         <url><loc>{{ route('outlets.show', $outlet->slug) }}</loc>@if ($outlet->updated_at)<lastmod>{{ $outlet->updated_at->toAtomString() }}</lastmod>@endif</url>
     @endforeach
+    @foreach ($articles as $article)
+        <url><loc>{{ route('articles.show', $article->slug) }}</loc>@if ($article->updated_at)<lastmod>{{ $article->updated_at->toAtomString() }}</lastmod>@endif</url>
+    @endforeach
 </urlset>
