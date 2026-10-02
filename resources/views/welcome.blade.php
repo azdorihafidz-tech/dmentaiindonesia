@@ -1,36 +1,39 @@
-<!DOCTYPE html>
-<html lang="id">
-<head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta name="theme-color" content="#f97316">
-    <x-seo :metadata="$metadata" />
-    @vite(['resources/css/app.css', 'resources/js/app.js'])
-</head>
-<body class="min-h-screen bg-stone-50 text-stone-950 antialiased">
-    <main class="mx-auto flex min-h-screen max-w-6xl flex-col justify-center px-6 py-20">
-        <p class="mb-5 text-sm font-bold uppercase tracking-[0.24em] text-orange-600">{{ $settings->get('brand.tagline', 'Dimsum & Gyoza') }}</p>
-        <h1 class="max-w-3xl text-5xl font-black tracking-tight sm:text-7xl">Halo, ini {{ $settings->get('brand.site_name', "D'Mentai Indonesia") }}.</h1>
-        <p class="mt-6 max-w-xl text-lg leading-8 text-stone-600">{{ $settings->get('brand.tagline', 'Website resmi D’Mentai Indonesia. Informasi menu dan outlet akan hadir di sini.') }}</p>
-        <a class="mt-9 inline-flex w-fit rounded-full bg-orange-500 px-6 py-3 font-semibold text-white transition hover:bg-orange-600 focus:outline-none focus:ring-4 focus:ring-orange-200" href="{{ url('/admin') }}">Masuk admin</a>
-    </main>
-    @if ($testimonials->isNotEmpty())
-        <section class="mx-auto max-w-6xl px-6 pb-12" aria-labelledby="testimonials-heading">
-            <h2 id="testimonials-heading" class="text-2xl font-bold">Cerita pelanggan</h2>
-            <div class="mt-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                @foreach ($testimonials as $testimonial)
-                    <figure class="rounded-2xl border border-stone-200 bg-white p-5">
-                        @if ($testimonial->image)<img src="{{ $testimonial->image->url }}" alt="{{ $testimonial->image->alt_text ?: '' }}" class="mb-4 h-12 w-12 rounded-full object-cover" loading="lazy">@endif
-                        <blockquote class="leading-7 text-stone-700">{{ $testimonial->content }}</blockquote>
-                        <figcaption class="mt-4 font-bold">{{ $testimonial->customer_name }}</figcaption>
-                    </figure>
-                @endforeach
-            </div>
-        </section>
-    @endif
-    <footer class="border-t border-stone-200 px-6 py-8 text-center text-sm text-stone-500">
-        <p>{{ $settings->get('footer.text', 'Dimsum & Gyoza untuk menemani harimu.') }}</p>
-        <p class="mt-2">{{ $settings->get('footer.copyright', '© '.date('Y').' '.$settings->get('brand.site_name', "D'Mentai Indonesia")) }}</p>
-    </footer>
-</body>
-</html>
+<x-layouts.public :metadata="$metadata">
+    <section class="hero-section">
+        <div class="hero-copy">
+            <p class="eyebrow">{{ $settings->get('brand.tagline', 'D’Mentai Indonesia') }}</p>
+            <h1>{{ $settings->get('brand.site_name', "D'Mentai Indonesia") }}</h1>
+            @if($settings->get('seo.meta_description'))<p class="hero-description">{{ $settings->get('seo.meta_description') }}</p>@endif
+            <div class="hero-actions"><a class="button button-primary" href="{{ route('products.index') }}">Lihat menu <span aria-hidden="true">↗</span></a><a class="button button-light" href="{{ route('outlets.index') }}">Cari outlet</a></div>
+        </div>
+        <div class="hero-art" aria-hidden="true"><span class="hero-orbit"></span><span class="hero-stamp">D’<br>MENTAI</span><span class="hero-spark hero-spark-one">✳</span><span class="hero-spark hero-spark-two">✦</span></div>
+        <div class="hero-bottom"><span>Menu</span><span>Promosi</span><span>Outlet</span><span>Indonesia</span></div>
+    </section>
+
+    @if($products->isNotEmpty())<section class="content-section section-shell" aria-labelledby="featured-heading">
+        <div class="section-heading"><div><p class="eyebrow">Dari menu kami</p><h2 id="featured-heading">Pilihan favorit</h2></div><a class="text-link" href="{{ route('products.index') }}">Lihat semua menu <span aria-hidden="true">→</span></a></div>
+        <div class="card-grid product-grid">@foreach($products as $product)<a class="content-card product-card" href="{{ route('products.show', $product->slug) }}">
+            @if($product->image)<img class="card-image" src="{{ $product->image->url }}" alt="{{ $product->image->alt_text ?: $product->name }}" loading="lazy">@else<div class="image-placeholder" aria-hidden="true">{{ mb_substr($product->name, 0, 1) }}</div>@endif
+            <div class="card-body"><p class="card-kicker">{{ $product->category?->name }}</p><h3>{{ $product->name }}</h3>@if($product->short_description)<p>{{ $product->short_description }}</p>@endif @if($product->price !== null)<strong class="price">Rp {{ number_format((float)($product->promotional_price ?? $product->price), 0, ',', '.') }}</strong>@endif</div>
+        </a>@endforeach</div>
+    </section>@endif
+
+    @if($categories->isNotEmpty())<section class="content-section category-band" aria-labelledby="categories-heading"><div class="section-shell"><div class="section-heading"><div><p class="eyebrow">Jelajahi</p><h2 id="categories-heading">Pilih sesuai selera</h2></div><a class="text-link" href="{{ route('products.index') }}">Semua menu →</a></div><div class="category-list">@foreach($categories as $category)<a class="category-chip" href="{{ route('products.index', ['kategori' => $category->slug]) }}">@if($category->image)<img src="{{ $category->image->url }}" alt="" loading="lazy">@endif<span>{{ $category->name }}</span><span aria-hidden="true">↗</span></a>@endforeach</div></div></section>@endif
+
+    @if($promotion)<section class="content-section section-shell" aria-labelledby="promotion-heading"><div class="promotion-feature">
+        @if($promotion->banner)<img src="{{ $promotion->banner->url }}" alt="{{ $promotion->banner->alt_text ?: $promotion->title }}" loading="lazy">@endif
+        <div class="promotion-copy"><p class="eyebrow">Sedang berlangsung</p><h2 id="promotion-heading">{{ $promotion->title }}</h2>@if($promotion->short_description)<p>{{ $promotion->short_description }}</p>@endif<a class="button button-primary" href="{{ route('promotions.show', $promotion->slug) }}">Lihat promosi <span aria-hidden="true">→</span></a></div>
+    </div></section>@endif
+
+    @if($outlets->isNotEmpty())<section class="content-section section-shell" aria-labelledby="outlets-heading"><div class="section-heading"><div><p class="eyebrow">Kunjungi kami</p><h2 id="outlets-heading">Temukan outlet</h2></div><a class="text-link" href="{{ route('outlets.index') }}">Semua outlet →</a></div><div class="card-grid outlet-grid">@foreach($outlets as $outlet)<a class="content-card outlet-card" href="{{ route('outlets.show', $outlet->slug) }}">@if($outlet->image)<img class="card-image" src="{{ $outlet->image->url }}" alt="{{ $outlet->image->alt_text ?: $outlet->name }}" loading="lazy">@endif<div class="card-body"><h3>{{ $outlet->name }}</h3>@if($outlet->address)<p>{{ $outlet->address }}</p>@endif@if($outlet->business_hours)<p class="small-note">{{ $outlet->business_hours }}</p>@endif</div></a>@endforeach</div></section>@endif
+
+    @if($testimonials->isNotEmpty())<section class="content-section testimonial-band" aria-labelledby="testimonials-heading"><div class="section-shell"><div class="section-heading"><div><p class="eyebrow">Cerita pelanggan</p><h2 id="testimonials-heading">Kesan yang dibagikan</h2></div></div><div class="card-grid">@foreach($testimonials as $testimonial)<figure class="quote-card"><blockquote>“{{ $testimonial->content }}”</blockquote><figcaption>@if($testimonial->image)<img src="{{ $testimonial->image->url }}" alt="" loading="lazy">@endif{{ $testimonial->customer_name }}</figcaption></figure>@endforeach</div></div></section>@endif
+
+    @if($gallery->isNotEmpty())<section class="content-section section-shell" aria-labelledby="gallery-heading"><div class="section-heading"><div><p class="eyebrow">Momen D’Mentai</p><h2 id="gallery-heading">Galeri</h2></div><a class="text-link" href="{{ route('gallery.index') }}">Lihat galeri →</a></div><div class="home-gallery">@foreach($gallery as $item)<a href="{{ route('gallery.index') }}" aria-label="{{ $item->alt_text ?: $item->title ?: 'Lihat galeri' }}"><img src="{{ $item->image->url }}" alt="{{ $item->alt_text ?: $item->image->alt_text ?: $item->title }}" loading="lazy"></a>@endforeach</div></section>@endif
+
+    @if($articles->isNotEmpty())<section class="content-section section-shell" aria-labelledby="articles-heading"><div class="section-heading"><div><p class="eyebrow">Cerita & kabar</p><h2 id="articles-heading">Dari D’Mentai</h2></div><a class="text-link" href="{{ route('articles.index') }}">Semua artikel →</a></div><div class="card-grid">@foreach($articles as $article)<a class="content-card article-card" href="{{ route('articles.show', $article->slug) }}">@if($article->featuredMedia)<img class="card-image" src="{{ $article->featuredMedia->url }}" alt="{{ $article->featuredMedia->alt_text ?: $article->title }}" loading="lazy">@endif<div class="card-body">@if($article->category)<p class="card-kicker">{{ $article->category->name }}</p>@endif<h3>{{ $article->title }}</h3>@if($article->excerpt)<p>{{ $article->excerpt }}</p>@endif<p class="small-note">{{ $article->published_at->locale('id')->translatedFormat('d F Y') }}</p></div></a>@endforeach</div></section>@endif
+
+    @if($faqs->isNotEmpty())<section class="content-section faq-band" aria-labelledby="home-faq-heading"><div class="section-shell faq-layout"><div><p class="eyebrow">Ada pertanyaan?</p><h2 id="home-faq-heading">Kami bantu jawab.</h2><a class="text-link" href="{{ route('faqs.index') }}">Lihat semua pertanyaan →</a></div><div class="faq-stack">@foreach($faqs as $faq)<details class="faq-item"><summary>{{ $faq->question }}<span aria-hidden="true">+</span></summary><p>{{ $faq->answer }}</p></details>@endforeach</div></div></section>@endif
+
+    <section class="final-cta"><p class="eyebrow">{{ $settings->get('brand.site_name', "D'Mentai Indonesia") }}</p><h2>Siap melihat lebih dekat?</h2><div class="hero-actions"><a class="button button-dark" href="{{ route('products.index') }}">Jelajahi menu <span aria-hidden="true">↗</span></a>@if($settings->get('contact.whatsapp'))<a class="button button-outline" href="https://wa.me/{{ preg_replace('/\D+/', '', $settings->get('contact.whatsapp')) }}" target="_blank" rel="noopener noreferrer">Hubungi kami</a>@endif</div></section>
+</x-layouts.public>

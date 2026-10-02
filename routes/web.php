@@ -8,9 +8,12 @@ use App\Http\Controllers\PageController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\PromotionController;
 use App\Models\Article;
+use App\Models\Faq;
+use App\Models\GalleryItem;
 use App\Models\Outlet;
 use App\Models\Page;
 use App\Models\Product;
+use App\Models\ProductCategory;
 use App\Models\Promotion;
 use App\Models\Testimonial;
 use App\Services\SeoManager;
@@ -21,6 +24,13 @@ Route::get('/', function (SeoManager $seo, SiteSettings $settings) {
     return view('welcome', [
         'metadata' => $seo->homepage(),
         'settings' => $settings,
+        'products' => Product::available()->where('featured', true)->with(['category', 'image'])->orderBy('sort_order')->limit(4)->get(),
+        'categories' => ProductCategory::active()->with('image')->orderBy('sort_order')->limit(8)->get(),
+        'promotion' => Promotion::available()->where('featured', true)->with('banner')->orderBy('sort_order')->first(),
+        'outlets' => Outlet::active()->where('featured', true)->with('image')->orderBy('sort_order')->limit(3)->get(),
+        'gallery' => GalleryItem::active()->with('image')->orderBy('sort_order')->limit(6)->get(),
+        'articles' => Article::published()->with(['category', 'featuredMedia'])->orderByDesc('published_at')->limit(3)->get(),
+        'faqs' => Faq::active()->orderBy('sort_order')->orderBy('id')->limit(4)->get(),
         'testimonials' => Testimonial::active()->with('image')->orderByDesc('featured')->orderBy('sort_order')->limit(6)->get(),
     ]);
 })->name('home');
@@ -84,5 +94,5 @@ Route::get('/galeri', [GalleryController::class, 'index'])->name('gallery.index'
 Route::get('/faq', [FaqController::class, 'index'])->name('faqs.index');
 
 Route::get('/{slug}', [PageController::class, 'show'])
-    ->where('slug', '^(?!admin(?:/|$)|livewire(?:/|$)|storage(?:/|$)|up$|sitemap\.xml$|robots\.txt$|menu(?:/|$)|promo(?:/|$)|outlet(?:/|$)|galeri(?:/|$)|artikel(?:/|$)|faq(?:/|$)|kontak(?:/|$)).+$')
+    ->where('slug', '^(?!admin(?:/|$)|livewire(?:/|$)|storage(?:/|$)|up$|sitemap\.xml$|robots\.txt$|menu(?:/|$)|promo(?:/|$)|outlet(?:/|$)|galeri(?:/|$)|artikel(?:/|$)|faq(?:/|$)).+$')
     ->name('pages.show');
