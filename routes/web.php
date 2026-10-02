@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\ArticleController;
+use App\Http\Controllers\FaqController;
 use App\Http\Controllers\GalleryController;
 use App\Http\Controllers\OutletController;
 use App\Http\Controllers\PageController;
@@ -11,12 +12,17 @@ use App\Models\Outlet;
 use App\Models\Page;
 use App\Models\Product;
 use App\Models\Promotion;
+use App\Models\Testimonial;
 use App\Services\SeoManager;
 use App\Services\SiteSettings;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function (SeoManager $seo, SiteSettings $settings) {
-    return view('welcome', ['metadata' => $seo->homepage(), 'settings' => $settings]);
+    return view('welcome', [
+        'metadata' => $seo->homepage(),
+        'settings' => $settings,
+        'testimonials' => Testimonial::active()->with('image')->orderByDesc('featured')->orderBy('sort_order')->limit(6)->get(),
+    ]);
 })->name('home');
 
 Route::get('/sitemap.xml', function () {
@@ -51,6 +57,10 @@ Route::get('/sitemap.xml', function () {
             })
             ->orderBy('slug')
             ->get(['slug', 'updated_at']),
+        'listings' => [
+            route('products.index'), route('promotions.index'), route('outlets.index'),
+            route('articles.index'), route('gallery.index'), route('faqs.index'),
+        ],
     ])->header('Content-Type', 'application/xml; charset=UTF-8');
 })->name('sitemap');
 
@@ -71,6 +81,7 @@ Route::get('/outlet/{slug}', [OutletController::class, 'show'])->name('outlets.s
 Route::get('/artikel', [ArticleController::class, 'index'])->name('articles.index');
 Route::get('/artikel/{slug}', [ArticleController::class, 'show'])->name('articles.show');
 Route::get('/galeri', [GalleryController::class, 'index'])->name('gallery.index');
+Route::get('/faq', [FaqController::class, 'index'])->name('faqs.index');
 
 Route::get('/{slug}', [PageController::class, 'show'])
     ->where('slug', '^(?!admin(?:/|$)|livewire(?:/|$)|storage(?:/|$)|up$|sitemap\.xml$|robots\.txt$|menu(?:/|$)|promo(?:/|$)|outlet(?:/|$)|galeri(?:/|$)|artikel(?:/|$)|faq(?:/|$)|kontak(?:/|$)).+$')

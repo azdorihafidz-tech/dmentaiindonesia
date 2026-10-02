@@ -17,6 +17,7 @@
                 @if (\Illuminate\Support\Facades\Route::has('outlets.index'))<a href="{{ route('outlets.index') }}" class="text-stone-700 hover:text-orange-700">Outlet</a>@endif
                 @if (\Illuminate\Support\Facades\Route::has('articles.index'))<a href="{{ route('articles.index') }}" class="text-stone-700 hover:text-orange-700">Artikel</a>@endif
                 @if (\Illuminate\Support\Facades\Route::has('gallery.index'))<a href="{{ route('gallery.index') }}" class="text-stone-700 hover:text-orange-700">Galeri</a>@endif
+                @if (\Illuminate\Support\Facades\Route::has('faqs.index'))<a href="{{ route('faqs.index') }}" class="text-stone-700 hover:text-orange-700">FAQ</a>@endif
             </nav>
         </div>
     </header>
