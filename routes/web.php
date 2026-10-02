@@ -1,7 +1,9 @@
 <?php
 
 use App\Http\Controllers\PageController;
+use App\Http\Controllers\ProductController;
 use App\Models\Page;
+use App\Models\Product;
 use App\Services\SeoManager;
 use App\Services\SiteSettings;
 use Illuminate\Support\Facades\Route;
@@ -18,6 +20,12 @@ Route::get('/sitemap.xml', function () {
             })
             ->orderBy('slug')
             ->get(['slug', 'updated_at']),
+        'products' => Product::available()
+            ->where(function ($query): void {
+                $query->whereNull('robots_directive')->orWhere('robots_directive', 'not like', 'noindex%');
+            })
+            ->orderBy('slug')
+            ->get(['slug', 'updated_at']),
     ])->header('Content-Type', 'application/xml; charset=UTF-8');
 })->name('sitemap');
 
@@ -28,6 +36,9 @@ Route::get('/robots.txt', function () {
         'Content-Type' => 'text/plain; charset=UTF-8',
     ]);
 })->name('robots');
+
+Route::get('/menu', [ProductController::class, 'index'])->name('products.index');
+Route::get('/menu/{slug}', [ProductController::class, 'show'])->name('products.show');
 
 Route::get('/{slug}', [PageController::class, 'show'])
     ->where('slug', '^(?!admin(?:/|$)|livewire(?:/|$)|storage(?:/|$)|up$|sitemap\.xml$|robots\.txt$|menu(?:/|$)|promo(?:/|$)|outlet(?:/|$)|galeri(?:/|$)|artikel(?:/|$)|faq(?:/|$)|kontak(?:/|$)).+$')

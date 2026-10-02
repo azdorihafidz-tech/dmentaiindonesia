@@ -19,6 +19,8 @@ class WebsiteSettings extends Page
 {
     protected string $view = 'filament.pages.website-settings';
 
+    protected static string|\UnitEnum|null $navigationGroup = 'Website';
+
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedCog6Tooth;
 
     protected static ?string $navigationLabel = 'Pengaturan website';

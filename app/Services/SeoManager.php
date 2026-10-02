@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Data\SeoMetadata;
 use App\Models\Page;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Str;
 
 class SeoManager
@@ -51,6 +52,51 @@ class SeoManager
             robots: $page->robots_directive ?: 'index,follow',
             ogTitle: $page->og_title ?: $title,
             ogDescription: $page->og_description ?: $description,
+            ogImage: $image?->url,
+        );
+    }
+
+    public function forContent(Model $content, string $routeName, string $nameField, string $summaryField, ?string $bodyField = null): SeoMetadata
+    {
+        $siteTitle = $this->settings->get('seo.default_title')
+            ?: $this->settings->get('brand.site_name', config('app.name'));
+        $name = (string) $content->getAttribute($nameField);
+        $title = filled($content->seo_title) ? $content->seo_title : (filled($name) ? "{$name} | {$siteTitle}" : $siteTitle);
+        $body = $bodyField ? $this->sanitizer->sanitize($content->getAttribute($bodyField)) : '';
+        $plainBody = trim(preg_replace('/\\s+/u', ' ', html_entity_decode(strip_tags($body), ENT_QUOTES | ENT_HTML5, 'UTF-8')) ?? '');
+        $bodyDescription = $plainBody !== '' ? Str::limit($plainBody, 160, '') : null;
+        $description = filled($content->seo_description)
+            ? $content->seo_description
+            : ($content->getAttribute($summaryField) ?: ($bodyDescription ?: $this->settings->get('seo.meta_description')));
+        $image = $content->ogMedia ?: $this->settings->media('seo.default_og_media_id');
+        $slug = $content->getAttribute('slug');
+
+        return new SeoMetadata(
+            title: $title,
+            description: $description,
+            canonical: $content->canonical_url ?: route($routeName, $slug),
+            robots: $content->robots_directive ?: 'index,follow',
+            ogTitle: $content->og_title ?: $title,
+            ogDescription: $content->og_description ?: $description,
+            ogImage: $image?->url,
+        );
+    }
+
+    public function forListing(string $title, string $routeName, ?string $description = null): SeoMetadata
+    {
+        $siteTitle = $this->settings->get('seo.default_title')
+            ?: $this->settings->get('brand.site_name', config('app.name'));
+        $fullTitle = "{$title} | {$siteTitle}";
+        $fallbackDescription = $this->settings->get('seo.meta_description');
+        $image = $this->settings->media('seo.default_og_media_id');
+
+        return new SeoMetadata(
+            title: $fullTitle,
+            description: $description ?: $fallbackDescription,
+            canonical: route($routeName),
+            robots: 'index,follow',
+            ogTitle: $fullTitle,
+            ogDescription: $description ?: $fallbackDescription,
             ogImage: $image?->url,
         );
     }
