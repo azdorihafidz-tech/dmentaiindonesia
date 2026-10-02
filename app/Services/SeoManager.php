@@ -18,7 +18,8 @@ class SeoManager
     {
         $title = $this->settings->get('seo.default_title')
             ?: $this->settings->get('brand.site_name', config('app.name'));
-        $description = $this->settings->get('seo.meta_description');
+        $description = $this->settings->get('seo.meta_description')
+            ?: 'Situs resmi '.$this->settings->get('brand.site_name', config('app.name')).'.';
         $image = $this->settings->media('seo.default_og_media_id');
 
         return new SeoMetadata(
@@ -42,7 +43,7 @@ class SeoManager
         $contentDescription = $plainContent !== '' ? Str::limit($plainContent, 160, '') : null;
         $description = filled($page->seo_description)
             ? $page->seo_description
-            : ($page->excerpt ?: ($contentDescription ?: $this->settings->get('seo.meta_description')));
+            : ($page->excerpt ?: ($contentDescription ?: $this->settings->get('seo.meta_description', 'Informasi dari '.$siteTitle.'.')));
         $image = $page->ogMedia ?: $this->settings->media('seo.default_og_media_id');
 
         return new SeoMetadata(
@@ -67,7 +68,7 @@ class SeoManager
         $bodyDescription = $plainBody !== '' ? Str::limit($plainBody, 160, '') : null;
         $description = filled($content->seo_description)
             ? $content->seo_description
-            : ($content->getAttribute($summaryField) ?: ($bodyDescription ?: $this->settings->get('seo.meta_description')));
+            : ($content->getAttribute($summaryField) ?: ($bodyDescription ?: $this->settings->get('seo.meta_description', 'Informasi '.$name.' dari '.$siteTitle.'.')));
         $image = $content->ogMedia ?: $this->settings->media('seo.default_og_media_id');
         $slug = $content->getAttribute('slug');
 
@@ -87,7 +88,7 @@ class SeoManager
         $siteTitle = $this->settings->get('seo.default_title')
             ?: $this->settings->get('brand.site_name', config('app.name'));
         $fullTitle = "{$title} | {$siteTitle}";
-        $fallbackDescription = $this->settings->get('seo.meta_description');
+        $fallbackDescription = $this->settings->get('seo.meta_description') ?: "Informasi {$title} dari {$siteTitle}.";
         $image = $this->settings->media('seo.default_og_media_id');
 
         return new SeoMetadata(
