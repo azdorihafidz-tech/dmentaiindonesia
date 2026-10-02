@@ -23,6 +23,8 @@ class SeoManager
             ?: $this->settings->get('brand.site_name', config('app.name'));
         $description = $this->settings->get('seo.meta_description')
             ?: 'Situs resmi '.$this->settings->get('brand.site_name', config('app.name')).'.';
+        $ogTitle = $this->settings->get('seo.og_title') ?: $title;
+        $ogDescription = $this->settings->get('seo.og_description') ?: $description;
         $image = $this->settings->media('seo.default_og_media_id');
         $canonical = route('home');
 
@@ -31,8 +33,8 @@ class SeoManager
             description: $description,
             canonical: $canonical,
             robots: 'index,follow',
-            ogTitle: $title,
-            ogDescription: $description,
+            ogTitle: $ogTitle,
+            ogDescription: $ogDescription,
             ogImage: $image?->url,
             structuredData: $this->websiteStructuredData($canonical),
         );

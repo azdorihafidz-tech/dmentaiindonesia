@@ -87,6 +87,20 @@ class PublicWebsiteTest extends TestCase
         $this->get('/')->assertOk()->assertSee('Nama Brand Uji')->assertSee('Logo D’Mentai')->assertSee('https://wa.me/08123456789')->assertDontSee('Instagram');
     }
 
+    public function test_homepage_supports_separate_default_open_graph_title_and_description(): void
+    {
+        SiteSetting::query()->create(['group' => 'seo', 'key' => 'seo.default_title', 'value' => 'Judul halaman demo']);
+        SiteSetting::query()->create(['group' => 'seo', 'key' => 'seo.meta_description', 'value' => 'Deskripsi halaman demo']);
+        SiteSetting::query()->create(['group' => 'seo', 'key' => 'seo.og_title', 'value' => 'Judul sosial demo']);
+        SiteSetting::query()->create(['group' => 'seo', 'key' => 'seo.og_description', 'value' => 'Deskripsi sosial demo']);
+
+        $this->get('/')->assertOk()
+            ->assertSee('<title>Judul halaman demo</title>', false)
+            ->assertSee('name="description" content="Deskripsi halaman demo"', false)
+            ->assertSee('property="og:title" content="Judul sosial demo"', false)
+            ->assertSee('property="og:description" content="Deskripsi sosial demo"', false);
+    }
+
     public function test_public_product_category_filter_and_detail_are_usable_without_invented_price(): void
     {
         $category = ProductCategory::query()->create(['name' => 'Kategori Uji', 'slug' => 'kategori-uji', 'status' => 'active']);

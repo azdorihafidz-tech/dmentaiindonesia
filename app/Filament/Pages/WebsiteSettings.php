@@ -82,6 +82,8 @@ class WebsiteSettings extends Page
                 Tab::make('SEO')->schema([Section::make('SEO default')->schema([
                     TextInput::make('seo.default_title')->label('Judul default')->maxLength(255),
                     Textarea::make('seo.meta_description')->label('Deskripsi default')->rows(3)->maxLength(320),
+                    TextInput::make('seo.og_title')->label('Judul Open Graph default')->maxLength(255),
+                    Textarea::make('seo.og_description')->label('Deskripsi Open Graph default')->rows(3)->maxLength(320),
                     Select::make('seo.default_og_media_id')->label('Gambar Open Graph dan sosial default')->options($images)->searchable()->preload(),
                 ])->columns(2)]),
             ])->columnSpanFull(),

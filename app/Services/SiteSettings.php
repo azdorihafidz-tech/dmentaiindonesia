@@ -35,7 +35,7 @@ class SiteSettings
     public function imageOptions(): array
     {
         return $this->imageOptions ??= Media::query()
-            ->whereIn('mime_type', ['image/jpeg', 'image/png', 'image/webp', 'image/gif'])
+            ->whereIn('mime_type', ['image/jpeg', 'image/png', 'image/webp', 'image/gif', 'image/svg+xml'])
             ->orderBy('original_name')
             ->pluck('original_name', 'id')
             ->all();
