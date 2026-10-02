@@ -5,11 +5,13 @@ Website resmi D'Mentai - Dimsum & Gyoza, dibangun dengan Laravel 12, Blade, Live
 ## Persiapan lokal (XAMPP)
 
 1. Salin `.env.example` menjadi `.env` bila belum tersedia.
-2. Atur koneksi MariaDB lokal pada `.env` dan pastikan database `dmentai_indonesia` tersedia.
+2. Atur koneksi MariaDB lokal pada `.env` dan pastikan database `dmentai_indonesia` tersedia. Untuk URL XAMPP `http://localhost/dmentaiindonesia`, gunakan `APP_URL` yang sesuai; bila memakai `php artisan serve`, sesuaikan ke URL server tersebut.
 3. Jalankan `composer install` dan `npm install`.
 4. Jalankan `php artisan key:generate` bila `APP_KEY` masih kosong.
 5. Jalankan `php artisan migrate`.
-6. Jalankan `npm run dev` dan `php artisan serve`.
+6. Jalankan `npm run dev` dan `php artisan serve` pada terminal terpisah bila memakai server development Laravel.
+
+Untuk mengakses melalui Apache XAMPP pada `/dmentaiindonesia`, root `.htaccess` dan `index.php` mengarahkan request ke Laravel `public/` tanpa membuka source project. Pastikan modul `mod_rewrite` dan `.htaccess` aktif di Apache.
 
 Panel admin tersedia di `/admin`. Akses hanya diberikan kepada akun dengan `is_admin=true` melalui pemeriksaan `canAccessPanel()`. Kolom `is_admin` bernilai false secara default dan dikeluarkan dari mass assignment; akun admin harus diprovisikan oleh operator tepercaya.
 

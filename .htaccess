@@ -1,0 +1,16 @@
+Options -MultiViews -Indexes
+
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+
+    # Leave the real public directory's own asset and front-controller rules intact.
+    RewriteRule ^public/ - [L]
+    RewriteRule ^index\.php$ - [L]
+
+    # Serve only files that physically exist under Laravel's public directory.
+    RewriteCond %{DOCUMENT_ROOT}/dmentaiindonesia/public/$1 -f
+    RewriteRule ^(.+)$ public/$1 [L]
+
+    # Keep project source files private while preserving the original request URI.
+    RewriteRule ^.*$ index.php [L]
+</IfModule>

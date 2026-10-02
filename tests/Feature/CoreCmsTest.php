@@ -37,6 +37,10 @@ class CoreCmsTest extends TestCase
         $this->get('/admin/website-settings')->assertRedirect('/admin/login');
         $this->actingAs(User::factory()->create(['is_admin' => false]))
             ->get('/admin/pages')->assertForbidden();
+        $this->actingAs(User::factory()->create(['is_admin' => false]))
+            ->get('/admin/media')->assertForbidden();
+        $this->actingAs(User::factory()->create(['is_admin' => false]))
+            ->get('/admin/website-settings')->assertForbidden();
         $admin = User::factory()->create(['is_admin' => true]);
         $this->actingAs($admin)->get('/admin/website-settings')->assertOk();
         $this->actingAs($admin)->get('/admin/pages')->assertOk();
@@ -95,12 +99,9 @@ class CoreCmsTest extends TestCase
         $page->update(['title' => 'Tentang Kami', 'excerpt' => 'Ringkasan']);
         $this->assertDatabaseHas('pages', ['id' => $page->id, 'title' => 'Tentang Kami', 'excerpt' => 'Ringkasan']);
 
-        try {
-            Page::query()->create(['title' => 'Duplikat', 'slug' => 'tentang-kami', 'status' => 'draft']);
-            $this->fail('Unique page slugs must be enforced by the database.');
-        } catch (QueryException) {
-            $this->assertTrue(true);
-        }
+        $this->expectException(QueryException::class);
+
+        Page::query()->create(['title' => 'Duplikat', 'slug' => 'tentang-kami', 'status' => 'draft']);
     }
 
     public function test_admin_can_create_a_page_and_form_validation_rejects_duplicate_slugs(): void
@@ -139,6 +140,17 @@ class CoreCmsTest extends TestCase
         $this->assertSame('Tentang', $metadata->title);
         $this->assertSame('Deskripsi halaman', $metadata->description);
         $this->assertSame(route('pages.show', 'tentang'), $metadata->canonical);
+
+        $contentFallback = Page::query()->create([
+            'title' => 'Informasi',
+            'slug' => 'informasi',
+            'content' => '<p>Konten utama dengan ringkasan SEO otomatis.</p>',
+            'status' => 'published',
+        ]);
+        $this->assertSame('Konten utama dengan ringkasan SEO otomatis.', app(SeoManager::class)->forPage($contentFallback)->description);
+
+        $globalFallback = Page::query()->create(['title' => 'Kosong', 'slug' => 'kosong', 'status' => 'published']);
+        $this->assertSame('Deskripsi global', app(SeoManager::class)->forPage($globalFallback)->description);
 
         $published->update(['seo_title' => 'Judul manual', 'seo_description' => 'Deskripsi manual', 'canonical_url' => 'https://example.com/tentang']);
         $overridden = app(SeoManager::class)->forPage($published->fresh());
