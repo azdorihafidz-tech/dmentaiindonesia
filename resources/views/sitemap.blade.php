@@ -7,4 +7,10 @@
     @foreach ($products as $product)
         <url><loc>{{ route('products.show', $product->slug) }}</loc>@if ($product->updated_at)<lastmod>{{ $product->updated_at->toAtomString() }}</lastmod>@endif</url>
     @endforeach
+    @foreach ($promotions as $promotion)
+        <url><loc>{{ route('promotions.show', $promotion->slug) }}</loc>@if ($promotion->updated_at)<lastmod>{{ $promotion->updated_at->toAtomString() }}</lastmod>@endif</url>
+    @endforeach
+    @foreach ($outlets as $outlet)
+        <url><loc>{{ route('outlets.show', $outlet->slug) }}</loc>@if ($outlet->updated_at)<lastmod>{{ $outlet->updated_at->toAtomString() }}</lastmod>@endif</url>
+    @endforeach
 </urlset>
