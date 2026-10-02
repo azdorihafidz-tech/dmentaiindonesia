@@ -18,7 +18,7 @@
 <head>
     <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="theme-color" content="#f36b21">
-    @if ($favicon = $site->media('brand.favicon_media_id'))<link rel="icon" href="{{ $favicon->url }}">@endif
+    @if ($favicon = $site->media('brand.favicon_media_id'))<link rel="icon" type="{{ $favicon->mime_type }}" href="{{ $favicon->url }}">@endif
     <x-seo :metadata="$metadata" />
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
@@ -27,7 +27,7 @@
     <header class="site-header">
         <div class="site-header-inner">
             <a href="{{ route('home') }}" class="brand-lockup" aria-label="{{ $siteName }} — Beranda">
-                @if ($logo)<img src="{{ $logo->url }}" alt="{{ $logo->alt_text ?: $siteName }}" class="brand-logo">@else<span class="brand-mark" aria-hidden="true">D</span>@endif
+                @if ($logo)<img src="{{ $logo->url }}" alt="{{ $logo->alt_text ?: $siteName }}" class="brand-logo">@endif
                 <span class="brand-name">{{ $siteName }}</span>
             </a>
             <button class="menu-toggle" type="button" aria-expanded="false" aria-controls="primary-navigation" aria-label="Buka navigasi"><span></span><span></span><span></span></button>

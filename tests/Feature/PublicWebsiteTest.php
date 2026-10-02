@@ -29,6 +29,8 @@ class PublicWebsiteTest extends TestCase
                 ->assertSee('name="description"', false)
                 ->assertSee('rel="canonical"', false)
                 ->assertSee('property="og:title"', false)
+                ->assertDontSee('rel="icon"', false)
+                ->assertDontSee('class="brand-logo"', false)
                 ->assertSee('name="twitter:title"', false);
         }
 
@@ -84,7 +86,9 @@ class PublicWebsiteTest extends TestCase
             ->assertSee('Kota Uji')
             ->assertSee('name="google-site-verification" content="verification-token"', false);
 
-        $this->get('/')->assertOk()->assertSee('Nama Brand Uji')->assertSee('Logo D’Mentai')->assertSee('https://wa.me/08123456789')->assertDontSee('Instagram');
+        $this->get('/')->assertOk()->assertSee('Nama Brand Uji')->assertSee('Logo D’Mentai')->assertSee('class="brand-logo"', false)
+            ->assertSee($logo->url, false)->assertSee('https://wa.me/08123456789')->assertDontSee('Instagram')
+            ->assertDontSee('class="brand-mark"', false);
     }
 
     public function test_homepage_supports_separate_default_open_graph_title_and_description(): void
@@ -99,6 +103,37 @@ class PublicWebsiteTest extends TestCase
             ->assertSee('name="description" content="Deskripsi halaman demo"', false)
             ->assertSee('property="og:title" content="Judul sosial demo"', false)
             ->assertSee('property="og:description" content="Deskripsi sosial demo"', false);
+    }
+
+    public function test_default_open_graph_image_falls_back_but_page_specific_image_has_priority(): void
+    {
+        $default = Media::query()->create([
+            'disk' => 'public', 'path' => 'brand/default-og.png', 'original_name' => 'default-og.png',
+            'mime_type' => 'image/png', 'file_size' => 100, 'folder' => 'brand',
+        ]);
+        $specific = Media::query()->create([
+            'disk' => 'public', 'path' => 'brand/page-og.webp', 'original_name' => 'page-og.webp',
+            'mime_type' => 'image/webp', 'file_size' => 100, 'folder' => 'brand',
+        ]);
+        $featured = Media::query()->create([
+            'disk' => 'public', 'path' => 'brand/page-featured.png', 'original_name' => 'page-featured.png',
+            'mime_type' => 'image/png', 'file_size' => 100, 'folder' => 'brand',
+        ]);
+        SiteSetting::query()->create(['group' => 'seo', 'key' => 'seo.default_og_media_id', 'value' => (string) $default->id]);
+
+        $this->get('/menu')->assertOk()
+            ->assertSee('property="og:image" content="'.$default->url.'"', false);
+
+        Page::query()->create([
+            'title' => 'Halaman OG Khusus', 'slug' => 'halaman-og-khusus', 'featured_media_id' => $featured->id,
+            'og_media_id' => $specific->id, 'status' => 'published',
+        ]);
+
+        $response = $this->get('/halaman-og-khusus')->assertOk()
+            ->assertSee('property="og:image" content="'.$specific->url.'"', false)
+            ->assertDontSee('property="og:image" content="'.$default->url.'"', false);
+
+        $this->assertSame(1, substr_count($response->getContent(), 'property="og:image"'));
     }
 
     public function test_public_product_category_filter_and_detail_are_usable_without_invented_price(): void

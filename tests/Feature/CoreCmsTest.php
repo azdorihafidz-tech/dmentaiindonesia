@@ -9,13 +9,16 @@ use App\Models\Media;
 use App\Models\Page;
 use App\Models\SiteSetting;
 use App\Models\User;
+use App\Services\BrandAssetManager;
 use App\Services\PageContentSanitizer;
 use App\Services\SeoManager;
 use App\Services\SiteSettings;
 use Illuminate\Database\QueryException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Validation\ValidationException;
 use Livewire\Livewire;
 use Tests\TestCase;
 
@@ -25,6 +28,9 @@ class CoreCmsTest extends TestCase
 
     public function test_settings_can_be_saved_and_retrieved(): void
     {
+        $this->assertSame('sqlite', DB::connection()->getDriverName());
+        $this->assertSame(':memory:', DB::connection()->getDatabaseName());
+
         $settings = app(SiteSettings::class);
         $settings->save(['brand' => ['site_name' => "D'Mentai", 'tagline' => 'Dimsum']]);
 
@@ -51,6 +57,12 @@ class CoreCmsTest extends TestCase
     {
         $admin = User::factory()->create(['is_admin' => true]);
 
+        $this->actingAs($admin)->get('/admin/website-settings')->assertOk()
+            ->assertSee('BRAND ASSETS')
+            ->assertSee('Logo utama yang digunakan pada header website.')
+            ->assertSee('Icon yang digunakan pada tab browser.')
+            ->assertSee('Gambar default yang digunakan ketika halaman tidak memiliki OG image khusus.');
+
         Livewire::actingAs($admin)
             ->test(WebsiteSettings::class)
             ->set('data.brand.site_name', 'D’Mentai Baru')
@@ -72,6 +84,120 @@ class CoreCmsTest extends TestCase
             ->set('data.contact.email', 'not-an-email')
             ->call('save')
             ->assertHasErrors(['data.contact.email']);
+    }
+
+    public function test_website_settings_uploads_logo_favicon_and_default_og_image_to_media_library(): void
+    {
+        Storage::fake('public');
+        $admin = User::factory()->create(['is_admin' => true]);
+
+        Livewire::actingAs($admin)
+            ->test(WebsiteSettings::class)
+            ->set('data.brand.logo_upload', UploadedFile::fake()->image('logo.png', 320, 120))
+            ->set('data.brand.favicon_upload', UploadedFile::fake()->image('favicon.png', 48, 48))
+            ->set('data.seo.default_og_upload', UploadedFile::fake()->image('social.png', 1200, 630))
+            ->call('save')
+            ->assertHasNoErrors();
+
+        foreach ([
+            'brand.logo_media_id' => "Logo D'Mentai Indonesia",
+            'brand.favicon_media_id' => "Favicon D'Mentai Indonesia",
+            'seo.default_og_media_id' => "Default Open Graph image D'Mentai Indonesia",
+        ] as $settingKey => $altText) {
+            $mediaId = SiteSetting::query()->where('key', $settingKey)->value('value');
+            $this->assertNotEmpty($mediaId);
+            $media = Media::query()->findOrFail((int) $mediaId);
+            $this->assertSame('brand', $media->folder);
+            $this->assertSame('image/png', $media->mime_type);
+            $this->assertSame($altText, $media->alt_text);
+            Storage::disk('public')->assertExists($media->path);
+        }
+
+        $logoId = SiteSetting::query()->where('key', 'brand.logo_media_id')->value('value');
+        $logo = Media::query()->findOrFail((int) $logoId);
+        $faviconId = SiteSetting::query()->where('key', 'brand.favicon_media_id')->value('value');
+        $favicon = Media::query()->findOrFail((int) $faviconId);
+
+        $this->get('/')->assertOk()
+            ->assertSee('Logo D&#039;Mentai Indonesia', false)
+            ->assertSee('href="'.route('home').'" class="brand-lockup"', false)
+            ->assertSee('src="'.$logo->url.'" alt="Logo D&#039;Mentai Indonesia" class="brand-logo"', false)
+            ->assertSee('<link rel="icon" type="image/png" href="'.$favicon->url.'">', false);
+
+        $defaultOgId = SiteSetting::query()->where('key', 'seo.default_og_media_id')->value('value');
+        $defaultOg = Media::query()->findOrFail((int) $defaultOgId);
+        $this->get('/menu')->assertSee('property="og:image" content="'.$defaultOg->url.'"', false);
+        $this->assertSame(1, substr_count($this->get('/menu')->getContent(), 'property="og:image"'));
+    }
+
+    public function test_website_settings_can_clear_a_brand_asset_without_deleting_its_library_file(): void
+    {
+        Storage::fake('public');
+        $admin = User::factory()->create(['is_admin' => true]);
+
+        Livewire::actingAs($admin)
+            ->test(WebsiteSettings::class)
+            ->set('data.brand.logo_upload', UploadedFile::fake()->image('logo.png', 320, 120))
+            ->call('save')
+            ->assertHasNoErrors();
+
+        $media = Media::query()->where('folder', 'brand')->firstOrFail();
+        $this->assertNotNull(SiteSetting::query()->where('key', 'brand.logo_media_id')->value('value'));
+
+        Livewire::actingAs($admin)
+            ->test(WebsiteSettings::class)
+            ->set('data.brand.logo_upload', null)
+            ->call('save')
+            ->assertHasNoErrors();
+
+        $this->assertNull(SiteSetting::query()->where('key', 'brand.logo_media_id')->value('value'));
+        $this->assertDatabaseHas('media', ['id' => $media->id, 'folder' => 'brand']);
+        Storage::disk('public')->assertExists($media->path);
+        $this->get('/')->assertOk()->assertDontSee('class="brand-logo"', false)->assertSee("D'Mentai Indonesia");
+    }
+
+    public function test_brand_asset_upload_rejects_svg_and_unregistered_paths(): void
+    {
+        Storage::fake('public');
+        $admin = User::factory()->create(['is_admin' => true]);
+        Storage::disk('public')->put('brand-assets/logo/unsafe.svg', '<svg onload="alert(1)"/>');
+
+        Livewire::actingAs($admin)
+            ->test(WebsiteSettings::class)
+            ->set('data.brand.logo_upload', UploadedFile::fake()->create('unsafe.svg', 1, 'image/svg+xml'))
+            ->call('save')
+            ->assertHasErrors(['data.brand.logo_upload']);
+
+        try {
+            app(BrandAssetManager::class)->registerUpload('brand-assets/logo/unsafe.svg', 'logo');
+            $this->fail('SVG uploads should not be accepted as brand assets.');
+        } catch (ValidationException $exception) {
+            $this->assertArrayHasKey('data.brand.logo_upload', $exception->errors());
+        }
+
+        try {
+            app(BrandAssetManager::class)->registerUpload('..\\.env', 'logo');
+            $this->fail('Paths outside the brand upload directory should be rejected.');
+        } catch (ValidationException $exception) {
+            $this->assertArrayHasKey('data.brand.logo_upload', $exception->errors());
+        }
+
+        $this->assertDatabaseCount('media', 0);
+    }
+
+    public function test_brand_asset_manager_accepts_a_valid_ico_favicon(): void
+    {
+        Storage::fake('public');
+        $png = UploadedFile::fake()->image('icon-source.png', 8, 8)->get();
+        $ico = "\x00\x00\x01\x00\x01\x00"."\x01\x01\x00\x00".pack('v', 1).pack('v', 32).pack('V', strlen($png)).pack('V', 22).$png;
+        $path = 'brand-assets/favicon/favicon.ico';
+        Storage::disk('public')->put($path, $ico);
+
+        $media = app(BrandAssetManager::class)->registerUpload($path, 'favicon');
+
+        $this->assertContains($media->mime_type, ['image/x-icon', 'image/vnd.microsoft.icon']);
+        $this->assertSame('brand', $media->folder);
+        Storage::disk('public')->assertExists($path);
     }
 
     public function test_media_upload_accepts_only_images_for_admins(): void
