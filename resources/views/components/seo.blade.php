@@ -3,7 +3,7 @@
 @if ($metadata->description)<meta name="description" content="{{ $metadata->description }}">@endif
 <link rel="canonical" href="{{ $metadata->canonical }}">
 <meta name="robots" content="{{ $metadata->robots }}">
-<meta property="og:type" content="website">
+<meta property="og:type" content="{{ request()->routeIs('articles.show') ? 'article' : 'website' }}">
 <meta property="og:site_name" content="{{ app(\App\Services\SiteSettings::class)->get('brand.site_name', config('app.name')) }}">
 <meta property="og:title" content="{{ $metadata->ogTitle }}">
 @if ($metadata->ogDescription)<meta property="og:description" content="{{ $metadata->ogDescription }}">@endif
