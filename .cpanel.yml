@@ -1,0 +1,8 @@
+---
+deployment:
+  tasks:
+    - export APPPATH=$HOME/dmentaiindonesia-app
+    - export DEPLOYPATH=$HOME/public_html/dmentaiindonesia.com
+    - /bin/bash deploy/link-public-storage.sh
+    - /bin/cp -R public/. $DEPLOYPATH/
+    - /bin/cp deploy/cpanel-index.php $DEPLOYPATH/index.php
