@@ -11,6 +11,7 @@
     $navigationPages = $cmsPages->whereIn('slug', ['tentang-kami', 'tentang-dmentai', 'kontak']);
     $contactPhone = $site->get('contact.whatsapp') ?: $site->get('contact.phone');
     $whatsapp = $site->get('contact.whatsapp');
+    $whatsappUrl = app(\App\Services\WhatsAppLink::class)->url($whatsapp);
     $socials = ['Instagram' => $site->get('social.instagram'), 'TikTok' => $site->get('social.tiktok'), 'Facebook' => $site->get('social.facebook'), 'YouTube' => $site->get('social.youtube')];
 @endphp
 <!DOCTYPE html>
@@ -18,7 +19,12 @@
 <head>
     <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="theme-color" content="#f36b21">
-    @if ($favicon = $site->media('brand.favicon_media_id'))<link rel="icon" type="{{ $favicon->mime_type }}" href="{{ $favicon->url }}">@endif
+    @if ($favicon = $site->media('brand.favicon_media_id'))
+        <link rel="icon" type="{{ $favicon->mime_type }}" href="{{ $favicon->url }}?v={{ $favicon->id }}">
+    @else
+        <link rel="icon" type="image/svg+xml" href="{{ asset('images/brand/dmentai-favicon.svg') }}?v=1">
+        <link rel="icon" type="image/png" sizes="64x64" href="{{ asset('images/brand/dmentai-favicon.png') }}?v=1">
+    @endif
     <x-seo :metadata="$metadata" />
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
@@ -37,7 +43,7 @@
                     @if (\Illuminate\Support\Facades\Route::has($route))<a href="{{ route($route) }}" @if(request()->routeIs($route, str_replace('.index', '.show', $route))) aria-current="page" @endif>{{ $label }}</a>@endif
                 @endforeach
                 @foreach ($navigationPages as $cmsPage)<a href="{{ route('pages.show', $cmsPage->slug) }}" @if(request()->is($cmsPage->slug)) aria-current="page" @endif>{{ $cmsPage->title }}</a>@endforeach
-                @if ($whatsapp)<a class="nav-contact" href="https://wa.me/{{ preg_replace('/\D+/', '', $whatsapp) }}" target="_blank" rel="noopener noreferrer">Hubungi kami</a>@endif
+                @if ($whatsappUrl)<a class="nav-contact" href="{{ $whatsappUrl }}" target="_blank" rel="noopener noreferrer">Hubungi kami</a>@endif
             </nav>
         </div>
     </header>
@@ -50,7 +56,7 @@
             <div><h2 class="footer-heading">Temukan kami</h2><div class="footer-links">
                 @if($siteAddress)<p>{{ $siteAddress }}</p>@endif
                 @if($site->get('location.maps_url'))<a href="{{ $site->get('location.maps_url') }}" target="_blank" rel="noopener noreferrer">Lihat peta</a>@endif
-                @if($contactPhone)<a href="{{ $whatsapp ? 'https://wa.me/'.preg_replace('/\D+/', '', $whatsapp) : 'tel:'.preg_replace('/[^+\d]/', '', $contactPhone) }}" @if($whatsapp)target="_blank" rel="noopener noreferrer"@endif>{{ $whatsapp ? 'WhatsApp' : $contactPhone }}</a>@endif
+                @if($contactPhone)<a href="{{ $whatsappUrl ?: 'tel:'.preg_replace('/[^+\d]/', '', $contactPhone) }}" @if($whatsappUrl)target="_blank" rel="noopener noreferrer"@endif>{{ $whatsappUrl ? 'WhatsApp' : $contactPhone }}</a>@endif
                 @if($site->get('contact.email'))<a href="mailto:{{ $site->get('contact.email') }}">{{ $site->get('contact.email') }}</a>@endif
                 @foreach($socials as $name => $url)@if($url)<a href="{{ $url }}" target="_blank" rel="noopener noreferrer">{{ $name }}</a>@endif @endforeach
                 @if($site->get('location.business_hours'))<p class="whitespace-pre-line">{{ $site->get('location.business_hours') }}</p>@endif

@@ -62,7 +62,9 @@ class OutletResource extends Resource
                         TextInput::make('phone')->label('Telepon')->tel()->maxLength(40),
                         TextInput::make('whatsapp')->label('WhatsApp')->tel()->maxLength(40),
                         Textarea::make('business_hours')->label('Jam operasional')->rows(4),
-                        TextInput::make('google_maps_url')->label('Google Maps URL')->url()->maxLength(2048),
+                        TextInput::make('google_maps_url')->label('Tautan Google Maps')->url()->maxLength(2048)
+                            ->placeholder('https://maps.app.goo.gl/...')
+                            ->helperText('Tempel tautan berbagi dari Google Maps. Jika dikosongkan, tautan dibuat dari latitude dan longitude.'),
                         TextInput::make('latitude')->label('Latitude')->numeric()->step(0.0000001)->minValue(-90)->maxValue(90)->rules(['required_with:longitude']),
                         TextInput::make('longitude')->label('Longitude')->numeric()->step(0.0000001)->minValue(-180)->maxValue(180)->rules(['required_with:latitude']),
                         Select::make('image_media_id')->label('Foto outlet')->options($images)->searchable()->preload(),

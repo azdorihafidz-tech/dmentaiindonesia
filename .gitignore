@@ -13,7 +13,8 @@
 /.zed
 /auth.json
 /node_modules
-/public/build
+# Keep Vite's small production build in Git so shared hosting can deploy it
+# without requiring Node.js or a terminal.
 /public/css/filament
 /public/fonts/filament
 /public/hot

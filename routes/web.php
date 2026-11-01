@@ -7,6 +7,7 @@ use App\Http\Controllers\OutletController;
 use App\Http\Controllers\PageController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\PromotionController;
+use App\Http\Middleware\TrackPageView;
 use App\Models\Article;
 use App\Models\Faq;
 use App\Models\GalleryItem;
@@ -17,10 +18,11 @@ use App\Models\ProductCategory;
 use App\Models\Promotion;
 use App\Models\Testimonial;
 use App\Services\SeoManager;
+use App\Services\PageViewMetrics;
 use App\Services\SiteSettings;
 use Illuminate\Support\Facades\Route;
 
-Route::get('/', function (SeoManager $seo, SiteSettings $settings) {
+Route::get('/', function (SeoManager $seo, SiteSettings $settings, PageViewMetrics $metrics) {
     return view('welcome', [
         'metadata' => $seo->homepage(),
         'settings' => $settings,
@@ -32,8 +34,9 @@ Route::get('/', function (SeoManager $seo, SiteSettings $settings) {
         'articles' => Article::published()->with(['category', 'featuredMedia'])->orderByDesc('published_at')->limit(3)->get(),
         'faqs' => Faq::active()->orderBy('sort_order')->orderBy('id')->limit(4)->get(),
         'testimonials' => Testimonial::active()->with('image')->orderByDesc('featured')->orderBy('sort_order')->limit(6)->get(),
+        'visitorStats' => $metrics->publicSummary(),
     ]);
-})->name('home');
+})->middleware(TrackPageView::class)->name('home');
 
 Route::get('/sitemap.xml', function () {
     return response()->view('sitemap', [
@@ -82,17 +85,18 @@ Route::get('/robots.txt', function () {
     ]);
 })->name('robots');
 
-Route::get('/menu', [ProductController::class, 'index'])->name('products.index');
-Route::get('/menu/{slug}', [ProductController::class, 'show'])->name('products.show');
-Route::get('/promo', [PromotionController::class, 'index'])->name('promotions.index');
-Route::get('/promo/{slug}', [PromotionController::class, 'show'])->name('promotions.show');
-Route::get('/outlet', [OutletController::class, 'index'])->name('outlets.index');
-Route::get('/outlet/{slug}', [OutletController::class, 'show'])->name('outlets.show');
-Route::get('/artikel', [ArticleController::class, 'index'])->name('articles.index');
-Route::get('/artikel/{slug}', [ArticleController::class, 'show'])->name('articles.show');
-Route::get('/galeri', [GalleryController::class, 'index'])->name('gallery.index');
-Route::get('/faq', [FaqController::class, 'index'])->name('faqs.index');
+Route::get('/menu', [ProductController::class, 'index'])->middleware(TrackPageView::class)->name('products.index');
+Route::get('/menu/{slug}', [ProductController::class, 'show'])->middleware(TrackPageView::class)->name('products.show');
+Route::get('/promo', [PromotionController::class, 'index'])->middleware(TrackPageView::class)->name('promotions.index');
+Route::get('/promo/{slug}', [PromotionController::class, 'show'])->middleware(TrackPageView::class)->name('promotions.show');
+Route::get('/outlet', [OutletController::class, 'index'])->middleware(TrackPageView::class)->name('outlets.index');
+Route::get('/outlet/{slug}', [OutletController::class, 'show'])->middleware(TrackPageView::class)->name('outlets.show');
+Route::get('/artikel', [ArticleController::class, 'index'])->middleware(TrackPageView::class)->name('articles.index');
+Route::get('/artikel/{slug}', [ArticleController::class, 'show'])->middleware(TrackPageView::class)->name('articles.show');
+Route::get('/galeri', [GalleryController::class, 'index'])->middleware(TrackPageView::class)->name('gallery.index');
+Route::get('/faq', [FaqController::class, 'index'])->middleware(TrackPageView::class)->name('faqs.index');
 
 Route::get('/{slug}', [PageController::class, 'show'])
     ->where('slug', '^(?!admin(?:/|$)|livewire(?:/|$)|storage(?:/|$)|up$|sitemap\.xml$|robots\.txt$|menu(?:/|$)|promo(?:/|$)|outlet(?:/|$)|galeri(?:/|$)|artikel(?:/|$)|faq(?:/|$)).+$')
+    ->middleware(TrackPageView::class)
     ->name('pages.show');

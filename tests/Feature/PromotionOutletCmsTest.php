@@ -111,7 +111,7 @@ class PromotionOutletCmsTest extends TestCase
         Outlet::query()->create(['name' => 'Outlet Tanpa Peta', 'slug' => 'outlet-tanpa-peta', 'status' => 'active', 'address' => 'Alamat tanpa tautan peta']);
 
         $this->get('/outlet')->assertOk()->assertSee('Outlet Terbuka')->assertDontSee('Outlet Tertutup');
-        $this->get('/outlet/outlet-terbuka')->assertOk()->assertSee('Alamat dari data uji')->assertSee('Lihat peta');
+        $this->get('/outlet/outlet-terbuka')->assertOk()->assertSee('Alamat dari data uji')->assertSee('Buka lokasi di Google Maps');
         $this->get('/outlet/outlet-tanpa-peta')->assertOk()->assertSee('Alamat tanpa tautan peta')->assertDontSee('Lihat peta');
         $this->get('/outlet/outlet-tertutup')->assertNotFound();
     }

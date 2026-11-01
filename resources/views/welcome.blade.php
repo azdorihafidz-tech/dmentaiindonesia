@@ -1,12 +1,24 @@
 <x-layouts.public :metadata="$metadata">
-    <section class="hero-section">
+    @php
+        $mascot = $settings->media('brand.mascot_media_id');
+        $showMascot = $settings->get('brand.mascot_enabled', '1') !== '0';
+        $mascotImage = $mascot?->url ?? asset('images/brand/dmentai-mascot.webp');
+        $mascotAlt = $settings->get('brand.mascot_alt_text') ?: ($mascot?->alt_text ?: "Maskot D'Mentai sedang menikmati dimsum");
+        $whatsappUrl = app(\App\Services\WhatsAppLink::class)->url($settings->get('contact.whatsapp'));
+    @endphp
+    <section @class(['hero-section', 'hero-section-with-mascot' => $showMascot])>
         <div class="hero-copy">
             <p class="eyebrow">{{ $settings->get('brand.tagline', 'D’Mentai Indonesia') }}</p>
             <h1>{{ $settings->get('brand.site_name', "D'Mentai Indonesia") }}</h1>
             @if($settings->get('brand.description'))<p class="hero-description">{{ $settings->get('brand.description') }}</p>@endif
             <div class="hero-actions"><a class="button button-primary" href="{{ route('products.index') }}">Lihat menu <span aria-hidden="true">↗</span></a><a class="button button-light" href="{{ route('outlets.index') }}">Cari outlet</a></div>
         </div>
-        <div class="hero-art" aria-hidden="true"><span class="hero-orbit"></span><span class="hero-stamp">D’<br>MENTAI</span><span class="hero-spark hero-spark-one">✳</span><span class="hero-spark hero-spark-two">✦</span></div>
+        @if($showMascot)
+            <div class="hero-mascot-art">
+                <span class="hero-mascot-backdrop" aria-hidden="true"></span>
+                <img src="{{ $mascotImage }}" alt="{{ $mascotAlt }}" width="1134" height="839" loading="eager" fetchpriority="high">
+            </div>
+        @endif
         <div class="hero-bottom"><span>Menu</span><span>Promosi</span><span>Outlet</span><span>Indonesia</span></div>
     </section>
 
@@ -35,5 +47,70 @@
 
     @if($faqs->isNotEmpty())<section class="content-section faq-band" aria-labelledby="home-faq-heading"><div class="section-shell faq-layout"><div><p class="eyebrow">Ada pertanyaan?</p><h2 id="home-faq-heading">Kami bantu jawab.</h2><a class="text-link" href="{{ route('faqs.index') }}">Lihat semua pertanyaan →</a></div><div class="faq-stack">@foreach($faqs as $faq)<details class="faq-item"><summary>{{ $faq->question }}<span aria-hidden="true">+</span></summary><p>{{ $faq->answer }}</p></details>@endforeach</div></div></section>@endif
 
-    <section class="final-cta"><p class="eyebrow">{{ $settings->get('brand.site_name', "D'Mentai Indonesia") }}</p><h2>Siap melihat lebih dekat?</h2><div class="hero-actions"><a class="button button-dark" href="{{ route('products.index') }}">Jelajahi menu <span aria-hidden="true">↗</span></a>@if($settings->get('contact.whatsapp'))<a class="button button-outline" href="https://wa.me/{{ preg_replace('/\D+/', '', $settings->get('contact.whatsapp')) }}" target="_blank" rel="noopener noreferrer">Hubungi kami</a>@endif</div></section>
+    <section class="final-cta"><p class="eyebrow">{{ $settings->get('brand.site_name', "D'Mentai Indonesia") }}</p><h2>Siap melihat lebih dekat?</h2><div class="hero-actions"><a class="button button-dark" href="{{ route('products.index') }}">Jelajahi menu <span aria-hidden="true">↗</span></a>@if($whatsappUrl)<a class="button button-outline" href="{{ $whatsappUrl }}" target="_blank" rel="noopener noreferrer">Hubungi kami</a>@endif</div></section>
+    @if($settings->get('analytics.public_visitor_stats_enabled', '1') !== '0')
+        <section class="visitor-stats-section content-section section-shell" aria-labelledby="visitor-stats-heading">
+            <div class="visitor-stats-card">
+                @php
+                    $pageViewMax = max(1, collect($visitorStats['daily_page_views'])->max('count'));
+                    $pageViewPoints = collect($visitorStats['daily_page_views'])->values()->map(function ($day, $index) use ($pageViewMax, $visitorStats) {
+                        $x = $index * (100 / max(1, count($visitorStats['daily_page_views']) - 1));
+                        $y = 34 - ((int) $day['count'] / $pageViewMax * 26);
+                        return number_format($x, 2, '.', '').','.number_format($y, 2, '.', '');
+                    });
+                    $pageViewDigits = str_split((string) $visitorStats['page_views']);
+                @endphp
+                <div class="visitor-widget-top">
+                    <div class="visitor-widget-title">
+                        <p class="eyebrow">Statistik D'Mentai</p>
+                        <h2 id="visitor-stats-heading">Page Views</h2>
+                    </div>
+                    <div class="visitor-pageview-counter">
+                        <svg class="visitor-pageview-chart" viewBox="0 0 100 40" role="img" aria-label="Grafik page views tujuh hari terakhir">
+                            <polygon points="{{ $pageViewPoints->implode(' ') }} 100,40 0,40" class="visitor-pageview-chart-fill"></polygon>
+                            <polyline points="{{ $pageViewPoints->implode(' ') }}" class="visitor-pageview-chart-line"></polyline>
+                        </svg>
+                        <div class="visitor-counter-digits" role="img" aria-label="{{ number_format($visitorStats['page_views'], 0, ',', '.') }} page views">
+                            @foreach($pageViewDigits as $digit)<span>{{ $digit }}</span>@endforeach
+                        </div>
+                    </div>
+                </div>
+                <div class="visitor-widget-visitors">
+                    <div class="visitor-widget-visitors-heading">
+                        <div><h3>Visitors</h3><p>Pengunjung menurut negara</p></div>
+                        @if($visitorStats['all_countries']->count() > 8)
+                            <details class="visitor-country-more">
+                                <summary>Lihat semua</summary>
+                                <div class="visitor-country-more-list">
+                                    @foreach($visitorStats['all_countries'] as $country)
+                                        <div class="visitor-country-row">
+                                            <span><span class="visitor-country-flag" aria-hidden="true">{{ \App\Services\CountryPresentation::flag($country->country_code) }}</span>{{ $country->country_name ?: ($country->country_code ?: 'Belum diketahui') }}</span>
+                                            <strong>{{ number_format((int) $country->unique_visitors, 0, ',', '.') }}</strong>
+                                        </div>
+                                    @endforeach
+                                </div>
+                            </details>
+                        @endif
+                    </div>
+                    @if($visitorStats['top_countries']->isNotEmpty())
+                        <div class="visitor-country-list" aria-label="Negara asal pengunjung terbanyak">
+                            @foreach($visitorStats['top_countries'] as $country)
+                                <div class="visitor-country-row">
+                                    <span><span class="visitor-country-flag" aria-hidden="true">{{ \App\Services\CountryPresentation::flag($country->country_code) }}</span>{{ $country->country_name ?: ($country->country_code ?: 'Belum diketahui') }}</span>
+                                    <strong>{{ number_format((int) $country->unique_visitors, 0, ',', '.') }}</strong>
+                                </div>
+                            @endforeach
+                        </div>
+                        @if($visitorStats['countries'] > 0)
+                            <p class="visitor-geo-attribution">This product includes GeoLite Data created by <a href="https://www.maxmind.com" target="_blank" rel="noopener noreferrer">MaxMind</a>, available from maxmind.com.</p>
+                        @elseif($visitorStats['page_views'] > 0)
+                            <p class="visitor-country-empty">Negara belum terdeteksi. Data negara akan tampil setelah database GeoLite2 gratis dipasang.</p>
+                        @endif
+                    @else
+                        <p class="visitor-country-empty">Belum ada data pengunjung yang tercatat.</p>
+                    @endif
+                </div>
+            </div>
+        </section>
+    @endif
 </x-layouts.public>

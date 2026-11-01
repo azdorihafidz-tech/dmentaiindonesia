@@ -5,6 +5,8 @@ namespace App\Http\Controllers;
 use App\Models\Product;
 use App\Models\ProductCategory;
 use App\Services\SeoManager;
+use App\Services\SiteSettings;
+use App\Services\WhatsAppLink;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
 
@@ -24,12 +26,16 @@ class ProductController extends Controller
         ]);
     }
 
-    public function show(string $slug, SeoManager $seo): View
+    public function show(string $slug, SeoManager $seo, SiteSettings $settings, WhatsAppLink $whatsappLink): View
     {
         $product = Product::available()->with(['category', 'image', 'ogMedia'])->where('slug', $slug)->firstOrFail();
 
         return view('products.show', [
             'product' => $product,
+            'whatsappUrl' => $whatsappLink->url(
+                $settings->get('contact.whatsapp'),
+                "Halo D'Mentai, saya ingin memesan {$product->name}.",
+            ),
             'metadata' => $seo->forContent($product, 'products.show', 'name', 'short_description', 'description'),
         ]);
     }

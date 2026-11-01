@@ -51,4 +51,17 @@ class Outlet extends Model
     {
         return $this->belongsTo(Media::class, 'og_media_id');
     }
+
+    public function getGoogleMapsLinkAttribute(): ?string
+    {
+        if (filled($this->google_maps_url)) {
+            return $this->google_maps_url;
+        }
+
+        if (blank($this->latitude) || blank($this->longitude)) {
+            return null;
+        }
+
+        return 'https://www.google.com/maps/search/?api=1&query='.urlencode($this->latitude.','.$this->longitude);
+    }
 }

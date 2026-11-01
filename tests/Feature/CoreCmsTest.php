@@ -38,6 +38,13 @@ class CoreCmsTest extends TestCase
         $this->assertSame('Dimsum', SiteSetting::query()->where('key', 'brand.tagline')->value('value'));
     }
 
+    public function test_public_pages_use_the_dmentai_favicon_when_no_custom_icon_is_configured(): void
+    {
+        $this->get('/')->assertOk()
+            ->assertSee('<link rel="icon" type="image/svg+xml" href="'.asset('images/brand/dmentai-favicon.svg').'?v=1">', false)
+            ->assertSee('<link rel="icon" type="image/png" sizes="64x64" href="'.asset('images/brand/dmentai-favicon.png').'?v=1">', false);
+    }
+
     public function test_only_admin_can_open_cms_pages(): void
     {
         $this->get('/admin/website-settings')->assertRedirect('/admin/login');
@@ -60,7 +67,8 @@ class CoreCmsTest extends TestCase
         $this->actingAs($admin)->get('/admin/website-settings')->assertOk()
             ->assertSee('BRAND ASSETS')
             ->assertSee('Logo utama yang digunakan pada header website.')
-            ->assertSee('Icon yang digunakan pada tab browser.')
+            ->assertSee('Gambar yang digunakan pada tab browser.')
+            ->assertSee('Favicon yang digunakan')
             ->assertSee('Gambar default yang digunakan ketika halaman tidak memiliki OG image khusus.');
 
         Livewire::actingAs($admin)
@@ -122,7 +130,7 @@ class CoreCmsTest extends TestCase
             ->assertSee('Logo D&#039;Mentai Indonesia', false)
             ->assertSee('href="'.route('home').'" class="brand-lockup"', false)
             ->assertSee('src="'.$logo->url.'" alt="Logo D&#039;Mentai Indonesia" class="brand-logo"', false)
-            ->assertSee('<link rel="icon" type="image/png" href="'.$favicon->url.'">', false);
+            ->assertSee('<link rel="icon" type="image/png" href="'.$favicon->url.'?v='.$favicon->id.'">', false);
 
         $defaultOgId = SiteSetting::query()->where('key', 'seo.default_og_media_id')->value('value');
         $defaultOg = Media::query()->findOrFail((int) $defaultOgId);
@@ -200,6 +208,26 @@ class CoreCmsTest extends TestCase
         Storage::disk('public')->assertExists($path);
     }
 
+    public function test_website_settings_accepts_a_jpeg_favicon_and_uses_it_in_the_browser_tab(): void
+    {
+        Storage::fake('public');
+        $admin = User::factory()->create(['is_admin' => true]);
+
+        Livewire::actingAs($admin)
+            ->test(WebsiteSettings::class)
+            ->set('data.brand.favicon_upload', UploadedFile::fake()->image('mascot.jpg', 64, 64))
+            ->call('save')
+            ->assertHasNoErrors();
+
+        $faviconId = SiteSetting::query()->where('key', 'brand.favicon_media_id')->value('value');
+        $favicon = Media::query()->findOrFail((int) $faviconId);
+
+        $this->assertSame('image/jpeg', $favicon->mime_type);
+        Storage::disk('public')->assertExists($favicon->path);
+        $this->get('/')->assertOk()
+            ->assertSee('<link rel="icon" type="image/jpeg" href="'.$favicon->url.'?v='.$favicon->id.'">', false);
+    }
+
     public function test_media_upload_accepts_only_images_for_admins(): void
     {
         Storage::fake('public');
@@ -216,8 +244,9 @@ class CoreCmsTest extends TestCase
             ->callMountedAction()
             ->assertHasNoErrors();
 
-        $this->assertDatabaseHas('media', ['original_name' => 'brand.png', 'mime_type' => 'image/png', 'folder' => 'brand']);
+        $this->assertDatabaseHas('media', ['original_name' => 'brand.png', 'mime_type' => 'image/webp', 'folder' => 'brand']);
         $media = Media::query()->firstOrFail();
+        $this->assertStringEndsWith('.webp', $media->path);
         Storage::disk('public')->assertExists($media->path);
 
         $storedPath = $media->path;

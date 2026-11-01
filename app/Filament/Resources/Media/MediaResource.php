@@ -42,7 +42,7 @@ class MediaResource extends Resource
                     ->maxSize(5120)->storeFileNamesIn('original_name')->required(fn (?Media $record): bool => $record === null)
                     ->visible(fn (?Media $record): bool => $record === null)
                     ->dehydrated(fn (?string $state): bool => filled($state))
-                    ->helperText('JPG, PNG, WebP, atau GIF. Maksimal 5 MB.'),
+                    ->helperText('JPG, PNG, WebP, atau GIF. Maksimal 5 MB. JPG, PNG, dan WebP dioptimalkan saat disimpan; GIF disimpan apa adanya.'),
                 TextInput::make('alt_text')->label('Teks alternatif')->maxLength(255),
                 TextInput::make('caption')->label('Keterangan')->maxLength(255),
                 Select::make('folder')->label('Folder')->options(['general' => 'Umum', 'brand' => 'Brand', 'pages' => 'Halaman', 'seo' => 'SEO'])->default('general')->required(),

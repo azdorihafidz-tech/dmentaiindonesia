@@ -17,8 +17,8 @@ class BrandAssetManager
             'label' => 'Logo website',
         ],
         'favicon' => [
-            'mimes' => ['image/png', 'image/x-icon', 'image/vnd.microsoft.icon'],
-            'extensions' => ['png', 'ico'],
+            'mimes' => ['image/png', 'image/jpeg', 'image/x-icon', 'image/vnd.microsoft.icon'],
+            'extensions' => ['png', 'jpg', 'jpeg', 'ico'],
             'max_kb' => 1024,
             'label' => 'Favicon website',
         ],
@@ -27,6 +27,12 @@ class BrandAssetManager
             'extensions' => ['png', 'jpg', 'jpeg', 'webp'],
             'max_kb' => 5120,
             'label' => 'Default Open Graph image',
+        ],
+        'mascot' => [
+            'mimes' => ['image/png', 'image/jpeg', 'image/webp'],
+            'extensions' => ['png', 'jpg', 'jpeg', 'webp'],
+            'max_kb' => 5120,
+            'label' => "Maskot D'Mentai",
         ],
     ];
 
@@ -37,6 +43,7 @@ class BrandAssetManager
 
         return Media::query()
             ->where('folder', 'brand')
+            ->where('path', 'like', 'brand-assets/'.$type.'/%')
             ->whereIn('mime_type', $config['mimes'])
             ->orderBy('original_name')
             ->get(['id', 'disk', 'path', 'original_name'])
@@ -56,6 +63,7 @@ class BrandAssetManager
         $media = Media::query()
             ->whereKey($id)
             ->where('folder', 'brand')
+            ->where('path', 'like', 'brand-assets/'.$type.'/%')
             ->whereIn('mime_type', $config['mimes'])
             ->first();
 
@@ -135,6 +143,7 @@ class BrandAssetManager
         $altText = match ($type) {
             'logo' => "Logo D'Mentai Indonesia",
             'favicon' => "Favicon D'Mentai Indonesia",
+            'mascot' => "Maskot D'Mentai Indonesia",
             default => "Default Open Graph image D'Mentai Indonesia",
         };
 
@@ -151,9 +160,16 @@ class BrandAssetManager
         );
     }
 
+    public function optimizeMascotUpload(string $path): string
+    {
+        $optimized = app(WebImageOptimizer::class)->optimize('public', $path, 1600, 88);
+
+        return $optimized['path'] ?? $path;
+    }
+
     public function deleteIfUnregistered(string $path): void
     {
-        if (preg_match('~^brand-assets/(logo|favicon|og_image)/[A-Za-z0-9_-]+\.(png|jpe?g|webp|ico)$~i', $path) !== 1) {
+        if (preg_match('~^brand-assets/(logo|favicon|og_image|mascot)/[A-Za-z0-9_-]+\.(png|jpe?g|webp|ico)$~i', $path) !== 1) {
             return;
         }
 

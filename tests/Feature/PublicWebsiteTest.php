@@ -29,7 +29,8 @@ class PublicWebsiteTest extends TestCase
                 ->assertSee('name="description"', false)
                 ->assertSee('rel="canonical"', false)
                 ->assertSee('property="og:title"', false)
-                ->assertDontSee('rel="icon"', false)
+                ->assertSee('<link rel="icon" type="image/svg+xml" href="'.asset('images/brand/dmentai-favicon.svg').'?v=1">', false)
+                ->assertSee('<link rel="icon" type="image/png" sizes="64x64" href="'.asset('images/brand/dmentai-favicon.png').'?v=1">', false)
                 ->assertDontSee('class="brand-logo"', false)
                 ->assertSee('name="twitter:title"', false);
         }
@@ -87,7 +88,7 @@ class PublicWebsiteTest extends TestCase
             ->assertSee('name="google-site-verification" content="verification-token"', false);
 
         $this->get('/')->assertOk()->assertSee('Nama Brand Uji')->assertSee('Logo D’Mentai')->assertSee('class="brand-logo"', false)
-            ->assertSee($logo->url, false)->assertSee('https://wa.me/08123456789')->assertDontSee('Instagram')
+            ->assertSee($logo->url, false)->assertSee('https://wa.me/628123456789')->assertDontSee('Instagram')
             ->assertDontSee('class="brand-mark"', false);
     }
 

@@ -2,22 +2,28 @@
 
 namespace App\Filament\Pages;
 
+use App\Models\ActivityLog;
 use App\Models\Media;
 use App\Services\BrandAssetManager;
 use App\Services\SiteSettings as Settings;
 use BackedEnum;
 use Filament\Forms\Components\FileUpload;
+use Filament\Forms\Components\Placeholder;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
+use Filament\Forms\Components\Toggle;
 use Filament\Notifications\Notification;
 use Filament\Pages\Page;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Components\Tabs;
 use Filament\Schemas\Components\Tabs\Tab;
+use Filament\Schemas\Components\Utilities\Get;
 use Filament\Schemas\Components\Utilities\Set;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
+use Illuminate\Support\HtmlString;
+use Illuminate\Support\Facades\Storage;
 
 class WebsiteSettings extends Page
 {
@@ -33,6 +39,11 @@ class WebsiteSettings extends Page
 
     public ?array $data = [];
 
+    public static function canAccess(): bool
+    {
+        return auth()->user()?->isOwner() ?? false;
+    }
+
     public function mount(): void
     {
         $this->fillSettingsForm();
@@ -41,11 +52,20 @@ class WebsiteSettings extends Page
     private function fillSettingsForm(): void
     {
         $defaults = [
-            'brand' => ['site_name' => "D'Mentai Indonesia", 'tagline' => 'Dimsum & Gyoza'],
+            'brand' => [
+                'site_name' => "D'Mentai Indonesia",
+                'tagline' => 'Dimsum & Gyoza',
+                'mascot_enabled' => true,
+                'mascot_alt_text' => "Maskot D'Mentai sedang menikmati dimsum",
+            ],
+            'analytics' => ['public_visitor_stats_enabled' => true],
             'seo' => ['default_title' => "D'Mentai Indonesia | Dimsum & Gyoza"],
         ];
 
         $data = array_replace_recursive($defaults, app(Settings::class)->formData());
+        $data['brand']['mascot_enabled'] = ($data['brand']['mascot_enabled'] ?? '1') !== '0';
+        $data['brand']['mascot_alt_text'] = $data['brand']['mascot_alt_text'] ?: $defaults['brand']['mascot_alt_text'];
+        $data['analytics']['public_visitor_stats_enabled'] = ($data['analytics']['public_visitor_stats_enabled'] ?? '1') !== '0';
 
         foreach ($this->assetFields() as [$group, $mediaField, $uploadField, $type]) {
             $media = Media::query()->find($data[$group][$mediaField] ?? null);
@@ -61,6 +81,7 @@ class WebsiteSettings extends Page
         return [
             ['brand', 'logo_media_id', 'logo_upload', 'logo'],
             ['brand', 'favicon_media_id', 'favicon_upload', 'favicon'],
+            ['brand', 'mascot_media_id', 'mascot_upload', 'mascot'],
             ['seo', 'default_og_media_id', 'default_og_upload', 'og_image'],
         ];
     }
@@ -84,14 +105,49 @@ class WebsiteSettings extends Page
                         Select::make('brand.logo_media_id')->label('Pilih logo dari Media Library')->options(fn (): array => app(BrandAssetManager::class)->options('logo'))
                             ->searchable()->preload()->nullable()->placeholder('Pilih aset dari folder Brand')
                             ->afterStateUpdated(fn (Set $set, mixed $state) => $set('brand.logo_upload', app(BrandAssetManager::class)->findBrandAsset(filled($state) ? (int) $state : null, 'logo')?->path)),
-                        FileUpload::make('brand.favicon_upload')->label('Favicon')->acceptedFileTypes(['image/png', 'image/x-icon', 'image/vnd.microsoft.icon'])
+                        Placeholder::make('favicon_preview')->label('Favicon yang digunakan')->content(function (): HtmlString {
+                            $favicon = app(Settings::class)->media('brand.favicon_media_id');
+                            $url = $favicon?->url ?? asset('images/brand/dmentai-favicon.svg');
+                            $alt = $favicon?->alt_text ?: "Favicon D'Mentai Indonesia";
+
+                            return new HtmlString('<img src="'.e($url).'" alt="'.e($alt).'" width="48" height="48" style="display:block;object-fit:contain">');
+                        }),
+                        FileUpload::make('brand.favicon_upload')->label('Favicon')->acceptedFileTypes(['image/png', 'image/jpeg', 'image/x-icon', 'image/vnd.microsoft.icon'])
                             ->disk('public')->directory('brand-assets/favicon')->visibility('public')->maxSize(1024)->imagePreviewHeight('64')
-                            ->helperText('Icon yang digunakan pada tab browser. PNG atau ICO; maksimal 1 MB. Ukuran 32 x 32, 48 x 48, atau 512 x 512 disarankan.')
+                            ->helperText('Gambar yang digunakan pada tab browser. JPG/JPEG, PNG, atau ICO; maksimal 1 MB. Ukuran persegi 48 x 48 atau 512 x 512 disarankan.')
                             ->deleteUploadedFileUsing(fn (string $file) => app(BrandAssetManager::class)->deleteIfUnregistered($file))
                             ->afterStateUpdated(fn (Set $set, mixed $state) => $state === null ? $set('brand.favicon_media_id', null) : null),
                         Select::make('brand.favicon_media_id')->label('Pilih favicon dari Media Library')->options(fn (): array => app(BrandAssetManager::class)->options('favicon'))
                             ->searchable()->preload()->nullable()->placeholder('Pilih aset dari folder Brand')
                             ->afterStateUpdated(fn (Set $set, mixed $state) => $set('brand.favicon_upload', app(BrandAssetManager::class)->findBrandAsset(filled($state) ? (int) $state : null, 'favicon')?->path)),
+                    ])->columns(2),
+                    Section::make('Maskot beranda')->schema([
+                        Toggle::make('brand.mascot_enabled')->label('Tampilkan maskot di hero')->default(true),
+                        TextInput::make('brand.mascot_alt_text')->label('Teks alternatif')->maxLength(255)
+                            ->helperText('Deskripsikan maskot untuk pembaca layar.'),
+                        Placeholder::make('mascot_preview')->label('Pratinjau maskot')->content(function (Get $get): HtmlString {
+                            $path = $get('brand.mascot_upload');
+                            $media = app(BrandAssetManager::class)->findBrandAsset(
+                                filled($get('brand.mascot_media_id')) ? (int) $get('brand.mascot_media_id') : null,
+                                'mascot',
+                            );
+                            $url = filled($path)
+                                ? Storage::disk('public')->url((string) $path)
+                                : ($media?->url ?? asset('images/brand/dmentai-mascot.webp'));
+
+                            return new HtmlString('<img src="'.e($url).'" alt="" style="display:block;max-height:180px;width:auto;object-fit:contain">');
+                        })->columnSpanFull(),
+                        FileUpload::make('brand.mascot_upload')->label('Unggah atau ganti maskot')->image()
+                            ->acceptedFileTypes(['image/png', 'image/jpeg', 'image/webp'])
+                            ->disk('public')->directory('brand-assets/mascot')->visibility('public')->maxSize(5120)
+                            ->imagePreviewHeight('180')
+                            ->helperText('PNG, JPG, atau WebP; maksimal 5 MB. Gambar akan dioptimalkan ke WebP bila server mendukungnya.')
+                            ->deleteUploadedFileUsing(fn (string $file) => app(BrandAssetManager::class)->deleteIfUnregistered($file))
+                            ->afterStateUpdated(fn (Set $set, mixed $state) => $state === null ? $set('brand.mascot_media_id', null) : null),
+                        Select::make('brand.mascot_media_id')->label('Pilih maskot dari Media Library')
+                            ->options(fn (): array => app(BrandAssetManager::class)->options('mascot'))
+                            ->searchable()->preload()->nullable()->placeholder('Gunakan unggahan di atas')
+                            ->afterStateUpdated(fn (Set $set, mixed $state) => $set('brand.mascot_upload', app(BrandAssetManager::class)->findBrandAsset(filled($state) ? (int) $state : null, 'mascot')?->path)),
                     ])->columns(2),
                 ]),
                 Tab::make('Kontak')->schema([Section::make('Kontak dan lokasi')->schema([
@@ -120,6 +176,10 @@ class WebsiteSettings extends Page
                         TextInput::make('analytics.google_analytics_id')->label('Google Analytics Measurement ID')->regex('/^G-[A-Z0-9]+$/i')->maxLength(32),
                         TextInput::make('analytics.search_console_verification')->label('Search Console verification')->maxLength(255),
                     ])->columns(2),
+                    Section::make('Statistik pengunjung di beranda')->schema([
+                        Toggle::make('analytics.public_visitor_stats_enabled')->label('Tampilkan angka pengunjung dan negara')->default(true)
+                            ->helperText('Menampilkan jumlah pengunjung dan negara asal terbanyak pada bagian bawah beranda.'),
+                    ]),
                 ]),
                 Tab::make('SEO')->schema([Section::make('SEO default')->schema([
                     TextInput::make('seo.default_title')->label('Judul default')->maxLength(255),
@@ -143,6 +203,8 @@ class WebsiteSettings extends Page
     {
         $data = $this->form->getState();
         $assets = app(BrandAssetManager::class);
+        $data['brand']['mascot_enabled'] = ($data['brand']['mascot_enabled'] ?? false) ? '1' : '0';
+        $data['analytics']['public_visitor_stats_enabled'] = ($data['analytics']['public_visitor_stats_enabled'] ?? false) ? '1' : '0';
 
         foreach ($this->assetFields() as [$group, $mediaField, $uploadField, $type]) {
             $path = $data[$group][$uploadField] ?? null;
@@ -150,6 +212,10 @@ class WebsiteSettings extends Page
             $selectedMedia = filled($selectedId) ? Media::query()->find((int) $selectedId) : null;
 
             if (filled($path)) {
+                if ($type === 'mascot' && (! $selectedMedia || $selectedMedia->path !== (string) $path)) {
+                    $path = $assets->optimizeMascotUpload((string) $path);
+                }
+
                 $registeredMedia = $assets->findByPath((string) $path, $type);
                 $media = $selectedMedia && $registeredMedia && $selectedMedia->is($registeredMedia)
                     ? $registeredMedia
@@ -163,6 +229,7 @@ class WebsiteSettings extends Page
         }
 
         app(Settings::class)->save($data);
+        ActivityLog::record('updated', 'Pengaturan website', 'Pengaturan website');
         $this->fillSettingsForm();
         Notification::make()->success()->title('Pengaturan disimpan')->send();
     }

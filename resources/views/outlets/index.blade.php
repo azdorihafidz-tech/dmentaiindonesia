@@ -5,10 +5,21 @@
     @else
         <div class="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
             @foreach ($outlets as $outlet)
-                <a href="{{ route('outlets.show', $outlet->slug) }}" class="overflow-hidden rounded-2xl border border-stone-200 bg-white hover:shadow-md">
-                    @if ($outlet->image)<img src="{{ $outlet->image->url }}" alt="{{ $outlet->image->alt_text ?: $outlet->name }}" class="aspect-[4/3] w-full object-cover" loading="lazy">@endif
-                    <div class="card-body"><h2>{{ $outlet->name }}</h2>@php($address = collect([$outlet->address, $outlet->city, $outlet->province, $outlet->country])->filter()->implode(', ')) @if ($address)<p>{{ $address }}</p>@endif @if($outlet->business_hours)<p class="small-note whitespace-pre-line">{{ $outlet->business_hours }}</p>@endif <div class="mt-4 flex flex-wrap gap-3 text-sm font-bold text-orange-800">@if($outlet->phone)<span>{{ $outlet->phone }}</span>@endif @if($outlet->whatsapp)<span>{{ $outlet->whatsapp }}</span>@endif @if($outlet->google_maps_url)<span>Lihat peta ↗</span>@endif</div></div>
-                </a>
+                <article class="content-card outlet-card">
+                    @php($whatsappUrl = app(\App\Services\WhatsAppLink::class)->url($outlet->whatsapp))
+                    @if ($outlet->image)<a href="{{ route('outlets.show', $outlet->slug) }}" class="block"><img src="{{ $outlet->image->url }}" alt="{{ $outlet->image->alt_text ?: $outlet->name }}" class="card-image" loading="lazy"></a>@endif
+                    <div class="card-body">
+                        <h2><a href="{{ route('outlets.show', $outlet->slug) }}" class="text-link">{{ $outlet->name }}</a></h2>
+                        @php($address = collect([$outlet->address, $outlet->city, $outlet->province, $outlet->country])->filter()->implode(', '))
+                        @if ($address)<p>{{ $address }}</p>@endif
+                        @if($outlet->business_hours)<p class="small-note whitespace-pre-line">{{ $outlet->business_hours }}</p>@endif
+                        <div class="mt-4 flex flex-wrap gap-2">
+                            @if($outlet->phone)<a href="tel:{{ $outlet->phone }}" class="button button-outline">Telepon</a>@endif
+                            @if($whatsappUrl)<a href="{{ $whatsappUrl }}" class="button button-outline" target="_blank" rel="noopener noreferrer">WhatsApp</a>@endif
+                            @if($outlet->google_maps_link)<a href="{{ $outlet->google_maps_link }}" class="button button-light" target="_blank" rel="noopener noreferrer" aria-label="Buka lokasi {{ $outlet->name }} di Google Maps">Lihat peta ↗</a>@endif
+                        </div>
+                    </div>
+                </article>
             @endforeach
         </div>
         <div class="mt-10">{{ $outlets->links() }}</div>

@@ -15,6 +15,12 @@ Untuk mengakses melalui Apache XAMPP pada `/dmentaiindonesia`, root `.htaccess` 
 
 Panel admin tersedia di `/admin`. Akses hanya diberikan kepada akun dengan `is_admin=true` melalui pemeriksaan `canAccessPanel()`. Kolom `is_admin` bernilai false secara default dan dikeluarkan dari mass assignment; akun admin harus diprovisikan oleh operator tepercaya.
 
+### Statistik negara pengunjung
+
+Website dapat mencari negara pengunjung menggunakan database GeoLite2 Country lokal. Buat akun GeoLite2 gratis di MaxMind, unduh database MMDB, lalu tempatkan sebagai `storage/app/geoip/GeoLite2-Country.mmdb` atau atur `GEOIP_DB_PATH` ke lokasi file tersebut. Aplikasi tidak mengirim alamat IP ke layanan luar dan tidak menyimpan IP; hanya kode/nama negara yang ditambahkan pada catatan kunjungan. IP lokal, privat, atau yang tidak ditemukan di database akan tercatat tanpa negara. Jika server produksi berada di balik reverse proxy, isi `TRUSTED_PROXIES` dengan alamat IP proxy tepercaya agar Laravel menerima alamat IP pengunjung dengan benar; jangan isi wildcard pada server yang dapat diakses langsung.
+
+GeoLite2 memerlukan atribusi MaxMind dan database perlu diperbarui berkala. Beranda menampilkan atribusi ketika data negara tersedia. Lihat [ketentuan GeoLite](https://www.maxmind.com/en/geolite/eula) dan panduan [memperbarui database](https://dev.maxmind.com/geoip/updating-databases/).
+
 ## Core CMS
 
 - Kelola identitas brand, kontak, sosial, lokasi, footer, integrasi, dan SEO melalui **Pengaturan website** di Filament.

@@ -10,6 +10,7 @@
                 <p class="mt-6 text-xl font-extrabold text-orange-700">Rp {{ number_format((float) ($product->promotional_price ?? $product->price), 0, ',', '.') }}</p>
                 @if ($product->promotional_price !== null)<p class="mt-1 text-sm text-stone-500 line-through">Rp {{ number_format((float) $product->price, 0, ',', '.') }}</p>@endif
             @endif
+            @if ($whatsappUrl)<a href="{{ $whatsappUrl }}" class="button button-primary mt-6" target="_blank" rel="noopener noreferrer">Pesan {{ $product->name }} via WhatsApp ↗</a>@endif
             <div class="article-content mt-8 leading-8 text-stone-700">{!! app(\App\Services\PageContentSanitizer::class)->sanitize($product->description) !!}</div>
         </div>
     </article>
